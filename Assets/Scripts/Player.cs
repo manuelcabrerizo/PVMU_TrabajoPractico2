@@ -1,15 +1,25 @@
 using Fusion;
+using Fusion.Addons.SimpleKCC;
 using UnityEngine;
 
 public class Player : NetworkBehaviour
 {
     [Networked] public bool CanMove { get; set; } = false;
     [SerializeField] private Transform weaponTransform = null;
-    private NetworkCharacterController characterController;
+    private SimpleKCC KCC;
+
+    private float jumpForce = 8.0f;
+    [Networked] public bool IsJumping { get; set; } = false;
+
 
     private void Awake()
     {
-        characterController = GetComponent<NetworkCharacterController>();
+        KCC = GetComponent<SimpleKCC>();
+    }
+
+    public override void Spawned()
+    {
+        KCC.SetGravity(Physics.gravity.y * 2.0f);
     }
 
     private void Update()
@@ -67,8 +77,19 @@ public class Player : NetworkBehaviour
             {
                 direction.Normalize();
             }
-            characterController.Move(direction);
+            
+            float currentJumpForce = 0.0f;
+            if (KCC.IsGrounded && IsJumping)
+            {
+                currentJumpForce = jumpForce;
+                IsJumping = false;
+            }
+            KCC.Move(direction * 6.0f, currentJumpForce);
             weaponTransform.rotation = Quaternion.Euler(lookRotation.y, lookRotation.x, 0.0f);
+        }
+        else
+        {
+            KCC.Move(Vector3.zero, 0.0f);
         }
         //float velocity = characterController.Velocity.magnitude / characterController.maxSpeed;
         //mecanimAnimator.Animator.SetFloat("Velocity", velocity);
@@ -83,7 +104,7 @@ public class Player : NetworkBehaviour
     [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
     private void Rpc_RelayJump()
     {
-        characterController.Jump();
+        IsJumping = true;
     }
 
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority, HostMode = RpcHostMode.SourceIsHostPlayer)]
