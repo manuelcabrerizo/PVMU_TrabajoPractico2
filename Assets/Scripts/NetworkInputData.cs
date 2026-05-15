@@ -7,6 +7,8 @@ public enum InputAction
     MoveBackward = 1 << 1,
     MoveLeft     = 1 << 2,
     MoveRight    = 1 << 3,
+    Shoot        = 1 << 4,
+    Jump         = 1 << 5,
 }
 
 public struct NetworkInputData : INetworkInput

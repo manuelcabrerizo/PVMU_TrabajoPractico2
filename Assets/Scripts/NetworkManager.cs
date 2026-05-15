@@ -84,6 +84,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public async void JoinLobby()
     {
         networkRunner = gameObject.AddComponent<NetworkRunner>();
+        gameObject.AddComponent<HitboxManager>();
         networkRunner.ProvideInput = true;
         var result = await networkRunner.JoinSessionLobby(SessionLobby.Custom, "TrabajoPractico2");
         if (result.Ok)
@@ -99,6 +100,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
     public async void StartHost(string session)
     { 
         networkRunner = gameObject.AddComponent<NetworkRunner>();
+        gameObject.AddComponent<HitboxManager>();
         networkRunner.ProvideInput = true;
         SceneRef scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex);
         NetworkSceneInfo sceneInfo = new NetworkSceneInfo();
@@ -117,7 +119,6 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         });
         if (result.Ok)
         {
-            Cursor.lockState = CursorLockMode.Locked;
             menuState = MenuState.Playing;
         }
         else
@@ -149,7 +150,8 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         sessionInfoList = sessionList;
     }
 
-    void INetworkRunnerCallbacks.OnInput(NetworkRunner runner, NetworkInput input)
+    // TODO: move this a PlayerInput class and Use IBeforeUpdate y IAfterTick
+    private void Update()
     {
         networkInputData.ClearActions();
         if (Input.GetKey(KeyCode.W))
@@ -160,6 +162,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             networkInputData.AddAction(InputAction.MoveLeft);
         if (Input.GetKey(KeyCode.D))
             networkInputData.AddAction(InputAction.MoveRight);
+        if (Input.GetMouseButton(0))
+            networkInputData.AddAction(InputAction.Shoot);
+        if (Input.GetKey(KeyCode.Space))
+            networkInputData.AddAction(InputAction.Jump);
 
         Vector2 lookRotation = networkInputData.GetLookRotation();
         lookRotation += new Vector2(Input.GetAxisRaw("Mouse X"), -Input.GetAxisRaw("Mouse Y")) * 4.0f;
@@ -182,7 +188,10 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
             lookRotation.y = -limit;
         }
         networkInputData.SetLookRotation(lookRotation);
+    }
 
+    void INetworkRunnerCallbacks.OnInput(NetworkRunner runner, NetworkInput input)
+    {
         input.Set(networkInputData);
     }
 

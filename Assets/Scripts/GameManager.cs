@@ -3,8 +3,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft
+public class GameManager : NetworkBehaviour, IService, IPlayerJoined, IPlayerLeft
 {
+    public Player LocalPlayer { get; private set; }
+    public Health LocalHealth { get; private set; }
+
+
     [SerializeField] private Player playerPrefab;
     [SerializeField] private Transform[] spawnPositions;
     [SerializeField] private int countDownTime = 3;
@@ -15,7 +19,15 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft
     [Networked] public int CountDownCounter { get; private set; } = 0;
     [Networked] public bool IsInCountDown { get; private set; } = false;
 
+    public bool IsPersistance => true;
+
     private bool wasSpawn = false;
+
+    private void Awake()
+    {
+        ServiceProvider.Instance.AddService<GameManager>(this);
+        ServiceProvider.Instance.AddService<EventBus>(new EventBus());
+    }
 
     private void OnGUI()
     {
@@ -58,6 +70,17 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft
     public override void Spawned()
     {
         wasSpawn = true;
+    }
+
+    public override void Render()
+    {
+        // Prepare LocalPlayer property that can be accessed from UI
+        if (LocalPlayer == null || LocalPlayer.Object == null || LocalPlayer.Object.IsValid == false)
+        {
+            var playerObject = Runner.GetPlayerObject(Runner.LocalPlayer);
+            LocalPlayer = playerObject != null ? playerObject.GetComponent<Player>() : null;
+            LocalHealth = playerObject != null ? playerObject.GetComponent<Health>() : null;
+        }
     }
 
     public void PlayerJoined(PlayerRef playerRef)

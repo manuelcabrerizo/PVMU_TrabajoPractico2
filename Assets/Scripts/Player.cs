@@ -1,24 +1,23 @@
 using Fusion;
 using Fusion.Addons.SimpleKCC;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Player : NetworkBehaviour
 {
     [Networked] public bool CanMove { get; set; } = false;
     [SerializeField] private Transform weaponTransform = null;
+    // TODO: Make this a scriptable object? pickables?
+    [SerializeField] private Uzi weapon = null;
+    [SerializeField] private LayerMask hitMask;
+
     private SimpleKCC KCC;
-
     private float jumpForce = 8.0f;
-    [Networked] public bool IsJumping { get; set; } = false;
-
-
-    private void Awake()
-    {
-        KCC = GetComponent<SimpleKCC>();
-    }
+    [Networked] private TickTimer shootTimer { get; set; }
 
     public override void Spawned()
     {
+        KCC = GetComponent<SimpleKCC>();
         KCC.SetGravity(Physics.gravity.y * 2.0f);
     }
 
@@ -26,22 +25,13 @@ public class Player : NetworkBehaviour
     {
         if (!HasInputAuthority)
             return;
-        if (Input.GetMouseButtonDown(0))
-        {
-            Rpc_Shoot();
-        }
-        if (Input.GetKeyDown(KeyCode.Space))
-        {
-            Rpc_Jump();
-        }
     }
 
     private void LateUpdate()
     {
         if (!HasInputAuthority)
             return;
-        Camera.main.transform.position = weaponTransform.position;
-        Camera.main.transform.rotation = weaponTransform.rotation;
+        Camera.main.transform.SetPositionAndRotation(weaponTransform.position, weaponTransform.rotation);
     }
 
     public override void FixedUpdateNetwork() 
@@ -54,9 +44,16 @@ public class Player : NetworkBehaviour
         {
             Vector2 lookRotation = data.GetLookRotation();
             Quaternion yawRotation = Quaternion.Euler(0.0f, lookRotation.x, 0.0f);
+            Quaternion pitchRotation = Quaternion.Euler(lookRotation.y, 0.0f, 0.0f);
             Vector3 forward = yawRotation * Vector3.forward;
             Vector3 right = yawRotation * Vector3.right;
             Vector3 direction = Vector3.zero;
+
+            if (data.IsAction(InputAction.Shoot) && shootTimer.ExpiredOrNotRunning(Runner))
+            {
+                Fire();
+                shootTimer = TickTimer.CreateFromSeconds(Runner, weapon.RateOfFire);
+            }
             if (data.IsAction(InputAction.MoveForward))
             {
                 direction += forward;
@@ -77,15 +74,14 @@ public class Player : NetworkBehaviour
             {
                 direction.Normalize();
             }
-            
             float currentJumpForce = 0.0f;
-            if (KCC.IsGrounded && IsJumping)
+            if (KCC.IsGrounded && data.IsAction(InputAction.Jump))
             {
                 currentJumpForce = jumpForce;
-                IsJumping = false;
             }
             KCC.Move(direction * 6.0f, currentJumpForce);
-            weaponTransform.rotation = Quaternion.Euler(lookRotation.y, lookRotation.x, 0.0f);
+            KCC.SetLookRotation(0.0f, lookRotation.x);
+            weaponTransform.localRotation = pitchRotation;
         }
         else
         {
@@ -95,27 +91,20 @@ public class Player : NetworkBehaviour
         //mecanimAnimator.Animator.SetFloat("Velocity", velocity);
     }
 
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority, HostMode = RpcHostMode.SourceIsHostPlayer)]
-    private void Rpc_Jump()
+    private void Fire()
     {
-        Rpc_RelayJump();
-    }
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
-    private void Rpc_RelayJump()
-    {
-        IsJumping = true;
-    }
-
-    [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority, HostMode = RpcHostMode.SourceIsHostPlayer)]
-    private void Rpc_Shoot()
-    {
-        Rpc_RelayShoot();
-    }
-
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
-    private void Rpc_RelayShoot()
-    {
-        // TODO: Shoot
+        List<LagCompensatedHit> hits = new List<LagCompensatedHit>();
+        float rayLength = float.MaxValue;
+        PlayerRef playerRef = Object.InputAuthority;
+        Runner.LagCompensation.RaycastAll(weaponTransform.position, weaponTransform.forward, rayLength, playerRef, hits);
+        for (int i = 0; i < hits.Count; i++)
+        {
+            if (hits[i].Hitbox && hits[i].Hitbox.gameObject.layer == hitMask.value)
+            {
+                Health health = hits[i].Hitbox.gameObject.GetComponentInParent<Health>();
+                health.TakeDamage(5);
+                break;
+            }
+        }
     }
 }
