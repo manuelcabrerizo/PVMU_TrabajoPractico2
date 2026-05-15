@@ -3,13 +3,23 @@ using UnityEngine.UI;
 
 public class UIManager : MonoBehaviour
 {
-    private GameManager GameManager => ServiceProvider.Instance.GetService<GameManager>();
+    private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
+    
     [SerializeField] private Image LifebarImage;
-    private void Update()
+
+    private void Start()
     {
-        if (GameManager.LocalHealth == null)
-            return;
-        LifebarImage.fillAmount = (float)GameManager.LocalHealth.CurrentHealth / (float)GameManager.LocalHealth.MaxHealth;
+        EventBus.Subscribe<OnHealthChangeEvent>(OnHealthChange);
     }
 
+    private void OnDestroy()
+    {
+        EventBus.Unsubscribe<OnHealthChangeEvent>(OnHealthChange);
+
+    }
+
+    private void OnHealthChange(in OnHealthChangeEvent onHealthChangeEvent)
+    {
+        LifebarImage.fillAmount = (float)onHealthChangeEvent.CurrentHealth / (float)onHealthChangeEvent.MaxHealth;
+    }
 }

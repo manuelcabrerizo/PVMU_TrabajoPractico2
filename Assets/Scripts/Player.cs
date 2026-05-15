@@ -6,32 +6,20 @@ using UnityEngine;
 public class Player : NetworkBehaviour
 {
     [Networked] public bool CanMove { get; set; } = false;
+    [Networked] private TickTimer shootTimer { get; set; }
+
+
     [SerializeField] private Transform weaponTransform = null;
     // TODO: Make this a scriptable object? pickables?
     [SerializeField] private Uzi weapon = null;
-    [SerializeField] private LayerMask hitMask;
+    [SerializeField] private float jumpForce = 8.0f;
 
     private SimpleKCC KCC;
-    private float jumpForce = 8.0f;
-    [Networked] private TickTimer shootTimer { get; set; }
 
     public override void Spawned()
     {
         KCC = GetComponent<SimpleKCC>();
         KCC.SetGravity(Physics.gravity.y * 2.0f);
-    }
-
-    private void Update()
-    {
-        if (!HasInputAuthority)
-            return;
-    }
-
-    private void LateUpdate()
-    {
-        if (!HasInputAuthority)
-            return;
-        Camera.main.transform.SetPositionAndRotation(weaponTransform.position, weaponTransform.rotation);
     }
 
     public override void FixedUpdateNetwork() 
@@ -91,6 +79,13 @@ public class Player : NetworkBehaviour
         //mecanimAnimator.Animator.SetFloat("Velocity", velocity);
     }
 
+    private void LateUpdate()
+    {
+        if (!HasInputAuthority)
+            return;
+        Camera.main.transform.SetPositionAndRotation(weaponTransform.position, weaponTransform.rotation);
+    }
+
     private void Fire()
     {
         List<LagCompensatedHit> hits = new List<LagCompensatedHit>();
@@ -99,7 +94,7 @@ public class Player : NetworkBehaviour
         Runner.LagCompensation.RaycastAll(weaponTransform.position, weaponTransform.forward, rayLength, playerRef, hits);
         for (int i = 0; i < hits.Count; i++)
         {
-            if (hits[i].Hitbox && hits[i].Hitbox.gameObject.layer == hitMask.value)
+            if (hits[i].Hitbox && hits[i].Hitbox.gameObject.layer == LayerMask.NameToLayer("PlayerHitbox"))
             {
                 Health health = hits[i].Hitbox.gameObject.GetComponentInParent<Health>();
                 health.TakeDamage(5);
