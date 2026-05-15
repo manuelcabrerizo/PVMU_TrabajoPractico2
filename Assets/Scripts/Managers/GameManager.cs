@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IService
 {
+    private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
     public bool IsPersistance => true;
 
     [SerializeField] private Player playerPrefab;
@@ -36,7 +37,7 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
         }
     }
 
-    IEnumerator StartCountDown()
+    private IEnumerator StartCountDown()
     {
         IsInCountDown = true;
         float countDownTimer = 2.0f;
@@ -67,6 +68,11 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
         wasSpawn = true;
     }
 
+    public void StartGame()
+    {
+        StartCoroutine(StartCountDown());
+    }
+
     public void PlayerJoined(PlayerRef playerRef)
     {
         if (HasStateAuthority == false)
@@ -78,10 +84,7 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
         Player player = Runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, playerRef);
         Runner.SetPlayerObject(playerRef, player.Object);
         players.Add(player);
-        //if (players.Count == spawnPositions.Length)
-        {
-            StartCoroutine(StartCountDown());
-        }
+        Rpc_RaiseOnPlayerJoinEvent(playerRef, players.Count, spawnPositions.Length);
     }
 
     public void PlayerLeft(PlayerRef playerRef)
@@ -97,5 +100,10 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
             players.RemoveAt(index);
         }
     }
-}
 
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
+    private void Rpc_RaiseOnPlayerJoinEvent(PlayerRef playerRef, int playerCount, int targetPlayerCount)
+    {
+        EventBus.Raise<OnPlayerJoinEvent>(playerRef, playerCount, targetPlayerCount);
+    }
+}

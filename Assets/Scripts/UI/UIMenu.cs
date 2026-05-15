@@ -9,6 +9,7 @@ using UnityEngine.UI;
 public class UIMenu : MonoBehaviour
 {
     public GameObject SessionPrefab;
+    public GameObject PlayerImage;
 
     public GameObject MainMenuPanel;
     public GameObject CreateSessionPanel;
@@ -28,6 +29,7 @@ public class UIMenu : MonoBehaviour
     public Transform JoinSessionContent;
     public Button JoinSessionBackButton;
     // Wait for Players buttons
+    public Transform WaitForPlayerContent;
     public Button WaitForPlayersBackButton;
 
     public UnityEvent OnGoToMainMenu;
@@ -64,23 +66,23 @@ public class UIMenu : MonoBehaviour
         CreateSessionPanel.SetActive(false);
         JoinSessionPanel.SetActive(false);
         WaitForPlayersPanel.SetActive(false);
-
         fsm = new FsmStateMachine<UIMenu>(
             new FsmState<UIMenu>[] { mainMenuState, createSessionState, joinSessionState, waitPlayersState, playingState },
             new UnityEvent[] { OnGoToMainMenu, OnGoToCreateSession, OnGoToJoinSession, OnGoToWaitForPlayers, OnGoToPlaying },
             mainMenuState);
-
         fsm.ConfigureTransition(mainMenuState, createSessionState, OnGoToCreateSession);
         fsm.ConfigureTransition(mainMenuState, joinSessionState, OnGoToJoinSession);
-
         fsm.ConfigureTransition(createSessionState, mainMenuState, OnGoToMainMenu);
         fsm.ConfigureTransition(createSessionState, waitPlayersState, OnGoToWaitForPlayers);
-
         fsm.ConfigureTransition(joinSessionState, mainMenuState, OnGoToMainMenu);
         fsm.ConfigureTransition(joinSessionState, waitPlayersState, OnGoToWaitForPlayers);
-
         fsm.ConfigureTransition(waitPlayersState, mainMenuState, OnGoToMainMenu);
         fsm.ConfigureTransition(waitPlayersState, playingState, OnGoToPlaying);
+    }
+
+    private void Update()
+    {
+        fsm.Update(Time.deltaTime);
     }
 
     public void ClearSessionsButtons()
@@ -101,6 +103,22 @@ public class UIMenu : MonoBehaviour
             button.onClick.AddListener(() => onClick(sessionName));
             TMP_Text text = go.GetComponentInChildren<TMP_Text>();
             text.text = sessionName;
+        }
+    }
+
+    public void ClearPlayerImages()
+    {
+        for (int i = WaitForPlayerContent.childCount - 1; i >= 0; i--)
+        {
+            Destroy(WaitForPlayerContent.GetChild(i).gameObject);
+        }
+    }
+
+    public void CreatePlayerImages(int count)
+    {
+        for (int i = 0; i < count; i++)
+        { 
+            GameObject go = Instantiate(PlayerImage, WaitForPlayerContent);
         }
     }
 }

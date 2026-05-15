@@ -8,8 +8,8 @@ using UnityEngine.SceneManagement;
 public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks, IService
 {
     private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
-
     public bool IsPersistance => true;
+
     private NetworkRunner networkRunner = null;
     private NetworkInputData networkInputData;
 

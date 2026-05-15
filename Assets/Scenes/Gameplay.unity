@@ -417,7 +417,7 @@ Transform:
   m_GameObject: {fileID: 73143799}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 23.49, y: 6, z: -17.38}
   m_LocalScale: {x: 1, y: 0.1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1807,6 +1807,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   SessionPrefab: {fileID: 6372183751989840803, guid: 7c4f2c09140bc8448bb1a4967803ff7d, type: 3}
+  PlayerImage: {fileID: 5015934488956691658, guid: 2d731530daa506e479a773ec68c6a554, type: 3}
   MainMenuPanel: {fileID: 1836858726}
   CreateSessionPanel: {fileID: 376301551}
   JoinSessionPanel: {fileID: 1724967774}
@@ -1820,6 +1821,7 @@ MonoBehaviour:
   CreateSessionBackButton: {fileID: 1288245563}
   JoinSessionContent: {fileID: 1940838459}
   JoinSessionBackButton: {fileID: 2067788848}
+  WaitForPlayerContent: {fileID: 1971537894}
   WaitForPlayersBackButton: {fileID: 967336041}
   OnGoToMainMenu:
     m_PersistentCalls:
@@ -2592,7 +2594,7 @@ Transform:
   m_GameObject: {fileID: 1226518261}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -4}
+  m_LocalPosition: {x: 57.77, y: 4, z: -2.34}
   m_LocalScale: {x: 1, y: 0.1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -9833,9 +9835,9 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 0, y: -366.31128}
-  m_Pivot: {x: 0.5, y: 1}
+  m_AnchoredPosition: {x: 0, y: -0.00016784668}
+  m_SizeDelta: {x: -1065, y: -266.31128}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1971537895
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9848,8 +9850,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3245ec927659c4140ac4f8d17403cc18, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_HorizontalFit: 0
-  m_VerticalFit: 2
+  m_HorizontalFit: 2
+  m_VerticalFit: 0
 --- !u!114 &1971537896
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9859,7 +9861,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 1971537893}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 59f8146938fff824cb5fd77236b75775, type: 3}
+  m_Script: {fileID: 11500000, guid: 30649d3a9faa99c48a7b1166b86bf2a0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   m_Padding:
@@ -9867,8 +9869,8 @@ MonoBehaviour:
     m_Right: 0
     m_Top: 0
     m_Bottom: 0
-  m_ChildAlignment: 1
-  m_Spacing: 0
+  m_ChildAlignment: 4
+  m_Spacing: 40
   m_ChildForceExpandWidth: 1
   m_ChildForceExpandHeight: 1
   m_ChildControlWidth: 0
@@ -9911,7 +9913,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: -37.78424}
+  m_AnchoredPosition: {x: 0, y: -11}
   m_SizeDelta: {x: 0, y: -232.68872}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1976690278

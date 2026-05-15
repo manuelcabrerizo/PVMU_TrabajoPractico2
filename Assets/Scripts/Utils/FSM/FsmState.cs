@@ -7,4 +7,5 @@ public abstract class FsmState<T>
     }
     public abstract void OnEnter();
     public abstract void OnExit();
+    public virtual void OnUpdate(float deltaTime) { }
 }

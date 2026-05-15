@@ -26,7 +26,6 @@ class JoinSessionState : FsmState<UIMenu>
         owner.JoinSessionPanel.SetActive(false);
         owner.JoinSessionBackButton.onClick.RemoveListener(OnBackButtonClick);
         EventBus.Unsubscribe<OnSessionListUpdatedEvent>(OnSessionListUpdated);
-
     }
 
     private void OnSessionListUpdated(in OnSessionListUpdatedEvent onSessionListUpdatedEvent)
