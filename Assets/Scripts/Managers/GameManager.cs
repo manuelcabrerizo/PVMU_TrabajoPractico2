@@ -3,8 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft
+public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IService
 {
+    public bool IsPersistance => true;
+
     [SerializeField] private Player playerPrefab;
     [SerializeField] private Transform[] spawnPositions;
     [SerializeField] private int countDownTime = 3;
@@ -19,7 +21,7 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft
 
     private void Awake()
     {
-        ServiceProvider.Instance.AddService<EventBus>(new EventBus());
+        ServiceProvider.Instance.AddService<GameManager>(this);
     }
 
     private void OnGUI()

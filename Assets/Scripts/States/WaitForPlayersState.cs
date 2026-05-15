@@ -4,6 +4,7 @@ class WaitForPlayersState : FsmState<UIMenu>
     {
         owner.WaitForPlayersBackButton.onClick.AddListener(OnBackButtonClick);
         owner.WaitForPlayersPanel.SetActive(true);
+        owner.OnGoToPlaying?.Invoke();
     }
 
     public override void OnExit()
@@ -14,6 +15,7 @@ class WaitForPlayersState : FsmState<UIMenu>
 
     private void OnBackButtonClick()
     {
+        // TODO: Disconect
         owner.OnGoToMainMenu?.Invoke();
     }
 }

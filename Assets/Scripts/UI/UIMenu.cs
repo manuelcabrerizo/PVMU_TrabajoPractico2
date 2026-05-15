@@ -1,3 +1,6 @@
+using Fusion;
+using System;
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -5,10 +8,13 @@ using UnityEngine.UI;
 
 public class UIMenu : MonoBehaviour
 {
+    public GameObject SessionPrefab;
+
     public GameObject MainMenuPanel;
     public GameObject CreateSessionPanel;
     public GameObject JoinSessionPanel;
     public GameObject WaitForPlayersPanel;
+    public GameObject PlayingPanel;
 
     // Main Menu buttons
     public Button MainMenuCreateButton;
@@ -28,12 +34,15 @@ public class UIMenu : MonoBehaviour
     public UnityEvent OnGoToCreateSession;
     public UnityEvent OnGoToJoinSession;
     public UnityEvent OnGoToWaitForPlayers;
+    public UnityEvent OnGoToPlaying;
+
 
     private FsmStateMachine<UIMenu> fsm = null;
     private MainMenuState mainMenuState = null;
     private CreateSessionState createSessionState = null;
     private JoinSessionState joinSessionState = null;
     private WaitForPlayersState waitPlayersState = null;
+    private PlayingState playingState = null;
 
     private void Awake()
     {
@@ -41,10 +50,12 @@ public class UIMenu : MonoBehaviour
         createSessionState = new CreateSessionState();
         joinSessionState = new JoinSessionState();
         waitPlayersState = new WaitForPlayersState();
+        playingState = new PlayingState();
         mainMenuState.Initialize(this);
         createSessionState.Initialize(this);
         joinSessionState.Initialize(this);
         waitPlayersState.Initialize(this);
+        playingState.Initialize(this);
     }
 
     private void Start()
@@ -55,8 +66,8 @@ public class UIMenu : MonoBehaviour
         WaitForPlayersPanel.SetActive(false);
 
         fsm = new FsmStateMachine<UIMenu>(
-            new FsmState<UIMenu>[] { mainMenuState, createSessionState, joinSessionState, waitPlayersState },
-            new UnityEvent[] { OnGoToMainMenu, OnGoToCreateSession, OnGoToJoinSession, OnGoToWaitForPlayers },
+            new FsmState<UIMenu>[] { mainMenuState, createSessionState, joinSessionState, waitPlayersState, playingState },
+            new UnityEvent[] { OnGoToMainMenu, OnGoToCreateSession, OnGoToJoinSession, OnGoToWaitForPlayers, OnGoToPlaying },
             mainMenuState);
 
         fsm.ConfigureTransition(mainMenuState, createSessionState, OnGoToCreateSession);
@@ -69,6 +80,27 @@ public class UIMenu : MonoBehaviour
         fsm.ConfigureTransition(joinSessionState, waitPlayersState, OnGoToWaitForPlayers);
 
         fsm.ConfigureTransition(waitPlayersState, mainMenuState, OnGoToMainMenu);
+        fsm.ConfigureTransition(waitPlayersState, playingState, OnGoToPlaying);
+    }
+
+    public void ClearSessionsButtons()
+    {
+        for (int i = JoinSessionContent.childCount - 1; i >= 0; i--)
+        {
+            Destroy(JoinSessionContent.GetChild(i).gameObject);
+        }
+    }
+
+    public void CreateSessionButtons(List<SessionInfo> sessionInfoList, Action<string> onClick)
+    {
+        foreach (SessionInfo sessionInfo in sessionInfoList)
+        {
+            string sessionName = sessionInfo.Name;
+            GameObject go = Instantiate(SessionPrefab, JoinSessionContent);
+            Button button = go.GetComponent<Button>();
+            button.onClick.AddListener(() => onClick(sessionName));
+            TMP_Text text = go.GetComponentInChildren<TMP_Text>();
+            text.text = sessionName;
+        }
     }
 }
-

@@ -5,83 +5,22 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public enum MenuState
+public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks, IService
 {
-    MainMenu,
-    CreateSession,
-    SelectSession,
-    Playing
-}
+    private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 
-public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
-{
+    public bool IsPersistance => true;
     private NetworkRunner networkRunner = null;
-    private List<SessionInfo> sessionInfoList = null;
-    private MenuState menuState;
-    private string sessionName = "";
     private NetworkInputData networkInputData;
 
     private void Awake()
     {
+        ServiceProvider.Instance.AddService<NetworkManager>(this);
+        ServiceProvider.Instance.AddService<EventBus>(new EventBus());
         networkInputData = new NetworkInputData(Vector2.zero, (char)0);
-        menuState = MenuState.MainMenu;
     }
 
-    private void OnGUI()
-    {
-        switch (menuState)
-        {
-            case MenuState.MainMenu: OnMainMenu(); break;
-            case MenuState.CreateSession: OnCreateSession(); break;
-            case MenuState.SelectSession: OnSelectSession(); break;
-        }
-    }
-
-    private void OnMainMenu()
-    {
-        if (GUI.Button(new Rect(0, 0, 200, 40), "Create Session"))
-        {
-            menuState = MenuState.CreateSession;
-        }
-        if (GUI.Button(new Rect(0, 40, 200, 40), "Join Session"))
-        {
-            JoinLobby();
-            menuState = MenuState.SelectSession;
-        }
-    }
-
-    private void OnCreateSession()
-    {
-        GUI.Label(new Rect(0, 0, 200, 40), "Create Session!");
-        sessionName = GUI.TextField(new Rect(0, 40, 200, 40), sessionName);
-        if (GUI.Button(new Rect(0, 80, 200, 40), "Create"))
-        {
-            StartHost(sessionName);
-        }
-
-    }
-
-    private void OnSelectSession()
-    {
-        GUI.Label(new Rect(0, 0, 200, 40), "Select Session!");
-        if (sessionInfoList != null && sessionInfoList.Count > 0)
-        {
-            for(int i = 0; i < sessionInfoList.Count; i++)
-            {
-                SessionInfo info = sessionInfoList[i];
-                if (GUI.Button(new Rect(0, 40 * (i + 1), 200, 40), info.Name))
-                {
-                    StartClient(info.Name);
-                }
-            }
-        }
-        else
-        {
-            GUI.Label(new Rect(0, 40, 200, 40), "No session found!");
-        }
-    }
-
-    public async void JoinLobby()
+    public async void JoinLobby(Action onSuccess, Action<StartGameResult> onFailure)
     {
         networkRunner = gameObject.AddComponent<NetworkRunner>();
         gameObject.AddComponent<HitboxManager>();
@@ -89,15 +28,15 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         var result = await networkRunner.JoinSessionLobby(SessionLobby.Custom, "TrabajoPractico2");
         if (result.Ok)
         {
-            // All good
+            onSuccess?.Invoke();
         }
         else
         {
-            Debug.Log($"Failed to Start: {result.ShutdownReason}");
+            onFailure?.Invoke(result);
         }
     }
 
-    public async void StartHost(string session)
+    public async void StartHost(string session, Action onSuccess, Action<StartGameResult> onFailure)
     { 
         networkRunner = gameObject.AddComponent<NetworkRunner>();
         gameObject.AddComponent<HitboxManager>();
@@ -119,15 +58,15 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         });
         if (result.Ok)
         {
-            menuState = MenuState.Playing;
+            onSuccess?.Invoke();
         }
         else
         {
-            Debug.Log($"Failed to Start: {result.ShutdownReason}");
+            onFailure?.Invoke(result);
         }
     }
 
-    public async void StartClient(string session)
+    public async void StartClient(string session, Action onSuccess, Action<StartGameResult> onFailure)
     {
         var result = await networkRunner.StartGame(new StartGameArgs()
         {
@@ -137,17 +76,17 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks
         });
         if (result.Ok)
         {
-            menuState = MenuState.Playing;
+            onSuccess?.Invoke();
         }
         else
         {
-            Debug.Log($"Failed to Start: {result.ShutdownReason}");
+            onFailure?.Invoke(result);
         }
     }
 
     void INetworkRunnerCallbacks.OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)
     {
-        sessionInfoList = sessionList;
+        EventBus.Raise<OnSessionListUpdatedEvent>(sessionList);
     }
 
     // TODO: move this a PlayerInput class and Use IBeforeUpdate y IAfterTick

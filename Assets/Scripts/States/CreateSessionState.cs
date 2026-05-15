@@ -1,5 +1,9 @@
+using UnityEngine;
+
 class CreateSessionState : FsmState<UIMenu>
 {
+    private NetworkManager NetworkManager => ServiceProvider.Instance.GetService<NetworkManager>();
+
     public override void OnEnter()
     {
         owner.CreateSessionCreateButton.onClick.AddListener(OnCreateButtonClick);
@@ -16,7 +20,16 @@ class CreateSessionState : FsmState<UIMenu>
 
     private void OnCreateButtonClick()
     {
-        owner.OnGoToWaitForPlayers?.Invoke();
+        if (owner.CreateSessionInputField.text.Length > 0)
+        {
+            NetworkManager.StartHost(owner.CreateSessionInputField.text,
+                () => {
+                    owner.OnGoToWaitForPlayers?.Invoke();
+                },
+                (result) => {
+                    Debug.Log($"Failed to Start: {result.ShutdownReason}");
+                });
+        }
     }
 
     private void OnBackButtonClick()
