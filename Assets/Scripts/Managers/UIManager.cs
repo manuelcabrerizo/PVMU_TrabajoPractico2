@@ -50,22 +50,14 @@ public class UIManager : MonoBehaviour
     private WaitForPlayersState waitPlayersState = null;
     private PlayingState playingState = null;
 
-    private void Awake()
-    {
-        mainMenuState = new MainMenuState();
-        createSessionState = new CreateSessionState();
-        joinSessionState = new JoinSessionState();
-        waitPlayersState = new WaitForPlayersState();
-        playingState = new PlayingState();
-        mainMenuState.Initialize(this);
-        createSessionState.Initialize(this);
-        joinSessionState.Initialize(this);
-        waitPlayersState.Initialize(this);
-        playingState.Initialize(this);
-    }
-
     private void Start()
     {
+        mainMenuState = new MainMenuState(this);
+        createSessionState = new CreateSessionState(this);
+        joinSessionState = new JoinSessionState(this);
+        waitPlayersState = new WaitForPlayersState(this);
+        playingState = new PlayingState(this);
+
         MainMenuPanel.SetActive(false);
         CreateSessionPanel.SetActive(false);
         JoinSessionPanel.SetActive(false);
@@ -84,9 +76,13 @@ public class UIManager : MonoBehaviour
         fsm.ConfigureTransition(waitPlayersState, playingState, OnGoToPlaying);
     }
 
-    private void Update()
+    private void OnDestroy()
     {
-        fsm.Update(Time.deltaTime);
+        mainMenuState.Dispose();
+        createSessionState.Dispose();
+        joinSessionState.Dispose();
+        waitPlayersState.Dispose();
+        playingState.Dispose();
     }
 
     public void ClearSessionsButtons()

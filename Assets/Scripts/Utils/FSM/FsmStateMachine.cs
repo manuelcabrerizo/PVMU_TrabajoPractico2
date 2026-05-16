@@ -27,9 +27,4 @@ public class FsmStateMachine<T>
         transitionsTable[from, transition] = to;
         transition.AddListener(() => OnTriggerTransition(transition));
     }
-
-    public void Update(float deltaTime)
-    {
-        currentState.OnUpdate(deltaTime);
-    }
 }

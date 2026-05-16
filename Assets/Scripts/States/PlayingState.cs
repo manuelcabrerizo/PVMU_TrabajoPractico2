@@ -5,13 +5,26 @@ class PlayingState : FsmState<UIManager>
 {
     private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 
-    public override void OnEnter()
+    public PlayingState(UIManager owner) : base(owner)
     {
         EventBus.Subscribe<OnCountDownChangeEvent>(OnCountDownChange);
         EventBus.Subscribe<OnMatchBeginEvent>(OnMatchBegin);
         EventBus.Subscribe<OnMatchEndEvent>(OnMatchEnd);
         EventBus.Subscribe<OnMatchTimerDownChangeEvent>(OnMatchTimerDownChange);
         EventBus.Subscribe<OnHealthChangeEvent>(OnHealthChange);
+    }
+    public override void Dispose()
+    {
+        EventBus.Unsubscribe<OnHealthChangeEvent>(OnHealthChange);
+        EventBus.Unsubscribe<OnMatchTimerDownChangeEvent>(OnMatchTimerDownChange);
+        EventBus.Unsubscribe<OnMatchEndEvent>(OnMatchEnd);
+        EventBus.Unsubscribe<OnMatchBeginEvent>(OnMatchBegin);
+        EventBus.Unsubscribe<OnCountDownChangeEvent>(OnCountDownChange);
+    }
+
+    public override void OnEnter()
+    {
+
         owner.PlayingPanel.SetActive(true);
         owner.PlayingGamplayUI.SetActive(false);
         Cursor.lockState = CursorLockMode.Locked;
@@ -19,13 +32,8 @@ class PlayingState : FsmState<UIManager>
 
     public override void OnExit()
     {
-        owner.PlayingPanel.SetActive(false);
-        EventBus.Unsubscribe<OnHealthChangeEvent>(OnHealthChange);
-        EventBus.Unsubscribe<OnMatchTimerDownChangeEvent>(OnMatchTimerDownChange);
-        EventBus.Unsubscribe<OnMatchEndEvent>(OnMatchEnd);
-        EventBus.Unsubscribe<OnMatchBeginEvent>(OnMatchBegin);
-        EventBus.Unsubscribe<OnCountDownChangeEvent>(OnCountDownChange);
         Cursor.lockState = CursorLockMode.None;
+        owner.PlayingPanel.SetActive(false);
     }
 
     private void OnCountDownChange(in OnCountDownChangeEvent onCountDownChangeEvent)

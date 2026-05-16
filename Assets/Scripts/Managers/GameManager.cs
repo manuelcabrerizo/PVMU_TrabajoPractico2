@@ -3,15 +3,31 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft
+public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IService
 {
     private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
+
+    [Networked] public bool IsMatchBegin { get; private set; } = false;
+    [Networked] public int CurrentPlayerCount { get; private set; } = 0;
+    public int TargetPlayerCount { get; private set; } = 2;
+    public bool IsPersistance => true;
+    public bool IsSpawned {get; private set; } = false;
+
+
     [SerializeField] private Player playerPrefab;
     [SerializeField] private Transform[] spawnPositions;
     [SerializeField] private int countDownTime = 3;
-
     private List<Player> players = new List<Player>();
-    private bool isMatchBegin = false;
+
+    private void Awake()
+    {
+        ServiceProvider.Instance.AddService<GameManager>(this);
+    }
+
+    public override void Spawned()
+    {
+        IsSpawned = true;
+    }
 
     public void PlayerJoined(PlayerRef playerRef)
     {
@@ -19,16 +35,22 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft
         {
             return;
         }
-        Vector3 spawnPosition = spawnPositions[players.Count].position;
+        Vector3 spawnPosition = spawnPositions[players.Count % spawnPositions.Length].position;
         spawnPosition.y += 1.0f;
         Player player = Runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, playerRef);
         Runner.SetPlayerObject(playerRef, player.Object);
         players.Add(player);
-        Rpc_RaiseOnPlayerJoinEvent(playerRef, players.Count, spawnPositions.Length);
-        if (!isMatchBegin && players.Count > 0 && players.Count == spawnPositions.Length)
+        CurrentPlayerCount++;
+        Rpc_RaiseOnPlayerJoinEvent(playerRef, CurrentPlayerCount, TargetPlayerCount);
+        if (!IsMatchBegin && CurrentPlayerCount == TargetPlayerCount)
         {
+            IsMatchBegin = true;
             StartCoroutine(PreMatchCountDown());
-            isMatchBegin = true;
+        }
+        else if (IsMatchBegin)
+        {
+            player.CanMove = true;
+            player.Rpc_RaiseOnMatchBegin();
         }
     }
 
@@ -43,6 +65,7 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft
         {
             Runner.Despawn(players[index].Object);
             players.RemoveAt(index);
+            CurrentPlayerCount--;
         }
     }
 
@@ -96,7 +119,6 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft
         }
         Rpc_RaiseOnMatchEnd();
     }
-
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
     private void Rpc_RaiseOnPlayerJoinEvent(PlayerRef playerRef, int playerCount, int targetPlayerCount)

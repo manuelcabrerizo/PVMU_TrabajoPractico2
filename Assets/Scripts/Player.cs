@@ -5,6 +5,8 @@ using UnityEngine;
 
 public class Player : NetworkBehaviour
 {
+    private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
+
     [Networked] public bool CanMove { get; set; } = false;
     [Networked] private TickTimer shootTimer { get; set; }
 
@@ -96,10 +98,17 @@ public class Player : NetworkBehaviour
         {
             if (hits[i].Hitbox && hits[i].Hitbox.gameObject.layer == LayerMask.NameToLayer("PlayerHitbox"))
             {
+                if (hits[i].Hitbox.Root.Object == Object) continue;
                 Health health = hits[i].Hitbox.gameObject.GetComponentInParent<Health>();
                 health.TakeDamage(5);
                 break;
             }
         }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.InputAuthority, HostMode = RpcHostMode.SourceIsServer)]
+    public void Rpc_RaiseOnMatchBegin()
+    {
+        EventBus.Raise<OnMatchBeginEvent>();
     }
 }

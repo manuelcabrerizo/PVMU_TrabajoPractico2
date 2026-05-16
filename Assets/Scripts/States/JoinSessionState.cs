@@ -5,10 +5,19 @@ class JoinSessionState : FsmState<UIManager>
     private NetworkManager NetworkManager => ServiceProvider.Instance.GetService<NetworkManager>();
     private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 
-    public override void OnEnter()
+    public JoinSessionState(UIManager owner) : base(owner)
     {
         EventBus.Subscribe<OnSessionListUpdatedEvent>(OnSessionListUpdated);
         owner.JoinSessionBackButton.onClick.AddListener(OnBackButtonClick);
+    }
+    public override void Dispose()
+    {
+        owner.JoinSessionBackButton.onClick.RemoveListener(OnBackButtonClick);
+        EventBus.Unsubscribe<OnSessionListUpdatedEvent>(OnSessionListUpdated);
+    }
+
+    public override void OnEnter()
+    {
         owner.JoinSessionPanel.SetActive(true);
         NetworkManager.JoinLobby(
             () =>
@@ -24,8 +33,6 @@ class JoinSessionState : FsmState<UIManager>
     public override void OnExit()
     {
         owner.JoinSessionPanel.SetActive(false);
-        owner.JoinSessionBackButton.onClick.RemoveListener(OnBackButtonClick);
-        EventBus.Unsubscribe<OnSessionListUpdatedEvent>(OnSessionListUpdated);
     }
 
     private void OnSessionListUpdated(in OnSessionListUpdatedEvent onSessionListUpdatedEvent)

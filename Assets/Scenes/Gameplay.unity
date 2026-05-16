@@ -3979,6 +3979,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2de4e4e957f010c47ab3d61a8fe79bc0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _IsMatchBegin: 0
+  _CurrentPlayerCount: 0
   playerPrefab: {fileID: 400004263329649207, guid: 645c974d70d9b7c428187e0ed49caa86, type: 3}
   spawnPositions:
   - {fileID: 1226518265}
@@ -10400,7 +10402,7 @@ RectTransform:
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 1, y: 1}
   m_AnchoredPosition: {x: 0, y: -0.00016784668}
-  m_SizeDelta: {x: -1065, y: -266.31128}
+  m_SizeDelta: {x: -991, y: -266.31128}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1971537895
 MonoBehaviour:

@@ -1,38 +1,41 @@
 class WaitForPlayersState : FsmState<UIManager>
 {
+    private GameManager GameManager => ServiceProvider.Instance.GetService<GameManager>();
     private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 
-    private int playerCount = 0;
-    private int targetPlayerCount = 0;
-
-    public override void OnEnter()
+    public WaitForPlayersState(UIManager owner) : base(owner)
     {
         EventBus.Subscribe<OnPlayerJoinEvent>(OnPlayerJoin);
         owner.WaitForPlayersBackButton.onClick.AddListener(OnBackButtonClick);
+    }
+    public override void Dispose()
+    {
+        owner.WaitForPlayersBackButton.onClick.RemoveListener(OnBackButtonClick);
+        EventBus.Unsubscribe<OnPlayerJoinEvent>(OnPlayerJoin);
+    }
+
+    public override void OnEnter()
+    {
         owner.WaitForPlayersPanel.SetActive(true);
+        if (GameManager.IsSpawned && (GameManager.IsMatchBegin || (GameManager.CurrentPlayerCount >= GameManager.TargetPlayerCount)))
+        {
+            owner.OnGoToPlaying?.Invoke();
+        }
     }
 
     public override void OnExit()
     {
         owner.WaitForPlayersPanel.SetActive(false);
-        owner.WaitForPlayersBackButton.onClick.RemoveListener(OnBackButtonClick);
-        EventBus.Unsubscribe<OnPlayerJoinEvent>(OnPlayerJoin);
-    }
-
-    public override void OnUpdate(float deltaTime)
-    {
-        if (playerCount > 0 && playerCount == targetPlayerCount)
-        {
-            owner.OnGoToPlaying?.Invoke();
-        }
     }
 
     private void OnPlayerJoin(in OnPlayerJoinEvent onPlayerJoinEvent)
     {
         owner.ClearPlayerImages();
         owner.CreatePlayerImages(onPlayerJoinEvent.PlayerCount);
-        playerCount = onPlayerJoinEvent.PlayerCount;
-        targetPlayerCount = onPlayerJoinEvent.TargetPlayerCount;
+        if (onPlayerJoinEvent.PlayerCount >= onPlayerJoinEvent.TargetPlayerCount)
+        {
+            owner.OnGoToPlaying?.Invoke();
+        }
     }
 
     private void OnBackButtonClick()
