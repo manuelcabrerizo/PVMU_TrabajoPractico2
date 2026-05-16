@@ -11,7 +11,7 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft
     [SerializeField] private int countDownTime = 3;
 
     private List<Player> players = new List<Player>();
-    private bool isMachBegin = false;
+    private bool isMatchBegin = false;
 
     public void PlayerJoined(PlayerRef playerRef)
     {
@@ -25,10 +25,10 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft
         Runner.SetPlayerObject(playerRef, player.Object);
         players.Add(player);
         Rpc_RaiseOnPlayerJoinEvent(playerRef, players.Count, spawnPositions.Length);
-        if (!isMachBegin && players.Count > 0 && players.Count == spawnPositions.Length)
+        if (!isMatchBegin && players.Count > 0 && players.Count == spawnPositions.Length)
         {
-            StartCoroutine(PreMachCountDown());
-            isMachBegin = true;
+            StartCoroutine(PreMatchCountDown());
+            isMatchBegin = true;
         }
     }
 
@@ -46,7 +46,7 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft
         }
     }
 
-    private IEnumerator PreMachCountDown()
+    private IEnumerator PreMatchCountDown()
     {
         float countDownTimer = 2.0f;
         int countDownCounter = 0;
@@ -69,32 +69,32 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft
         {
             p.CanMove = true;
         }
-        Rpc_RaiseOnMachBegin();
+        Rpc_RaiseOnMatchBegin();
         StartCoroutine(DuringMatchTimer());
     }
 
     public IEnumerator DuringMatchTimer()
     {
         float countDownTimer = 2.0f;
-        int machDurection = (5 * 60);
+        int matchDurection = (5 * 60);
         int countDownCounter = 0;
-        Rpc_RaiseOnMachTimerChangeEvent(machDurection);
+        Rpc_RaiseOnMatchTimerChangeEvent(matchDurection);
         while (true)
         {
             if (countDownTimer < 0.0f)
             {
                 countDownCounter++;
-                Rpc_RaiseOnMachTimerChangeEvent(machDurection - countDownCounter);
+                Rpc_RaiseOnMatchTimerChangeEvent(matchDurection - countDownCounter);
                 countDownTimer = 1.0f;
             }
             countDownTimer -= Time.deltaTime;
-            if (countDownCounter == machDurection)
+            if (countDownCounter == matchDurection)
             {
                 break;
             }
             yield return new WaitForEndOfFrame();
         }
-        Rpc_RaiseOnMachEnd();
+        Rpc_RaiseOnMatchEnd();
     }
 
 
@@ -111,20 +111,20 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
-    private void Rpc_RaiseOnMachTimerChangeEvent(int seconds)
+    private void Rpc_RaiseOnMatchTimerChangeEvent(int seconds)
     {
-        EventBus.Raise<OnMachTimerDownChangeEvent>(seconds);
+        EventBus.Raise<OnMatchTimerDownChangeEvent>(seconds);
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
-    private void Rpc_RaiseOnMachBegin()
+    private void Rpc_RaiseOnMatchBegin()
     {
-        EventBus.Raise<OnMachBeginEvent>();
+        EventBus.Raise<OnMatchBeginEvent>();
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
-    private void Rpc_RaiseOnMachEnd()
+    private void Rpc_RaiseOnMatchEnd()
     {
-        EventBus.Raise<OnMachEndEvent>();
+        EventBus.Raise<OnMatchEndEvent>();
     }
 }

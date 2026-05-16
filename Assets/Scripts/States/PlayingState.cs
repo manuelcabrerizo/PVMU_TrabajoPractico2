@@ -8,9 +8,9 @@ class PlayingState : FsmState<UIManager>
     public override void OnEnter()
     {
         EventBus.Subscribe<OnCountDownChangeEvent>(OnCountDownChange);
-        EventBus.Subscribe<OnMachBeginEvent>(OnMachBegin);
-        EventBus.Subscribe<OnMachEndEvent>(OnMachEnd);
-        EventBus.Subscribe<OnMachTimerDownChangeEvent>(OnMachTimerDownChange);
+        EventBus.Subscribe<OnMatchBeginEvent>(OnMatchBegin);
+        EventBus.Subscribe<OnMatchEndEvent>(OnMatchEnd);
+        EventBus.Subscribe<OnMatchTimerDownChangeEvent>(OnMatchTimerDownChange);
         EventBus.Subscribe<OnHealthChangeEvent>(OnHealthChange);
         owner.PlayingPanel.SetActive(true);
         owner.PlayingGamplayUI.SetActive(false);
@@ -21,9 +21,9 @@ class PlayingState : FsmState<UIManager>
     {
         owner.PlayingPanel.SetActive(false);
         EventBus.Unsubscribe<OnHealthChangeEvent>(OnHealthChange);
-        EventBus.Unsubscribe<OnMachTimerDownChangeEvent>(OnMachTimerDownChange);
-        EventBus.Unsubscribe<OnMachEndEvent>(OnMachEnd);
-        EventBus.Unsubscribe<OnMachBeginEvent>(OnMachBegin);
+        EventBus.Unsubscribe<OnMatchTimerDownChangeEvent>(OnMatchTimerDownChange);
+        EventBus.Unsubscribe<OnMatchEndEvent>(OnMatchEnd);
+        EventBus.Unsubscribe<OnMatchBeginEvent>(OnMatchBegin);
         EventBus.Unsubscribe<OnCountDownChangeEvent>(OnCountDownChange);
         Cursor.lockState = CursorLockMode.None;
     }
@@ -33,13 +33,13 @@ class PlayingState : FsmState<UIManager>
         owner.PlayingCountDown.text = onCountDownChangeEvent.CountDown.ToString();
     }
 
-    private void OnMachBegin(in OnMachBeginEvent onMachBeginEvent)
+    private void OnMatchBegin(in OnMatchBeginEvent onMachBeginEvent)
     {
         owner.PlayingGamplayUI.SetActive(true);
         owner.PlayingCountDown.gameObject.SetActive(false);
     }
 
-    private void OnMachEnd(in OnMachEndEvent onMachEndEvent)
+    private void OnMatchEnd(in OnMatchEndEvent onMachEndEvent)
     {
         owner.PlayingGamplayUI.SetActive(false);
         owner.PlayingCountDown.gameObject.SetActive(true);
@@ -50,7 +50,7 @@ class PlayingState : FsmState<UIManager>
         owner.PlayingLifebarImage.fillAmount = (float)onHealthChangeEvent.CurrentHealth / (float)onHealthChangeEvent.MaxHealth;
     }
 
-    private void OnMachTimerDownChange(in OnMachTimerDownChangeEvent onMachTimerDownChangeEvent)
+    private void OnMatchTimerDownChange(in OnMatchTimerDownChangeEvent onMachTimerDownChangeEvent)
     {
         TimeSpan time = TimeSpan.FromSeconds(onMachTimerDownChangeEvent.Seconds);
         owner.PlayingMachTimer.text = string.Format("{0:00}:{1:00}", (int)time.TotalMinutes, time.Seconds);

@@ -1,4 +1,4 @@
-public struct OnMachTimerDownChangeEvent : IEvent
+public struct OnMatchTimerDownChangeEvent : IEvent
 {
     public int Seconds;
 
