@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-public class UIMenu : MonoBehaviour
+public class UIManager : MonoBehaviour
 {
     public GameObject SessionPrefab;
     public GameObject PlayerImage;
@@ -31,6 +31,11 @@ public class UIMenu : MonoBehaviour
     // Wait for Players buttons
     public Transform WaitForPlayerContent;
     public Button WaitForPlayersBackButton;
+    // Playing UI
+    public GameObject PlayingGamplayUI;
+    public TMP_Text PlayingCountDown;
+    public Image PlayingLifebarImage;
+    public TMP_Text PlayingMachTimer;
 
     public UnityEvent OnGoToMainMenu;
     public UnityEvent OnGoToCreateSession;
@@ -38,8 +43,7 @@ public class UIMenu : MonoBehaviour
     public UnityEvent OnGoToWaitForPlayers;
     public UnityEvent OnGoToPlaying;
 
-
-    private FsmStateMachine<UIMenu> fsm = null;
+    private FsmStateMachine<UIManager> fsm = null;
     private MainMenuState mainMenuState = null;
     private CreateSessionState createSessionState = null;
     private JoinSessionState joinSessionState = null;
@@ -66,8 +70,8 @@ public class UIMenu : MonoBehaviour
         CreateSessionPanel.SetActive(false);
         JoinSessionPanel.SetActive(false);
         WaitForPlayersPanel.SetActive(false);
-        fsm = new FsmStateMachine<UIMenu>(
-            new FsmState<UIMenu>[] { mainMenuState, createSessionState, joinSessionState, waitPlayersState, playingState },
+        fsm = new FsmStateMachine<UIManager>(
+            new FsmState<UIManager>[] { mainMenuState, createSessionState, joinSessionState, waitPlayersState, playingState },
             new UnityEvent[] { OnGoToMainMenu, OnGoToCreateSession, OnGoToJoinSession, OnGoToWaitForPlayers, OnGoToPlaying },
             mainMenuState);
         fsm.ConfigureTransition(mainMenuState, createSessionState, OnGoToCreateSession);

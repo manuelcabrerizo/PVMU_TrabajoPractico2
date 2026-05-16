@@ -1,6 +1,6 @@
 using UnityEngine;
 
-class CreateSessionState : FsmState<UIMenu>
+class CreateSessionState : FsmState<UIManager>
 {
     private NetworkManager NetworkManager => ServiceProvider.Instance.GetService<NetworkManager>();
 

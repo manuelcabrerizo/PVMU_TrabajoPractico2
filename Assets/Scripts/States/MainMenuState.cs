@@ -1,4 +1,4 @@
-class MainMenuState : FsmState<UIMenu>
+class MainMenuState : FsmState<UIManager>
 {
     public override void OnEnter()
     {

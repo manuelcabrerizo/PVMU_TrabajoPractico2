@@ -3,75 +3,15 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IService
+public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft
 {
     private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
-    public bool IsPersistance => true;
-
     [SerializeField] private Player playerPrefab;
     [SerializeField] private Transform[] spawnPositions;
     [SerializeField] private int countDownTime = 3;
 
     private List<Player> players = new List<Player>();
-
-    [Networked] public PlayerRef Winner { get; private set; } = PlayerRef.None;
-    [Networked] public int CountDownCounter { get; private set; } = 0;
-    [Networked] public bool IsInCountDown { get; private set; } = false;
-
-    private bool wasSpawn = false;
-
-    private void Awake()
-    {
-        ServiceProvider.Instance.AddService<GameManager>(this);
-    }
-
-    private void OnGUI()
-    {
-        if (wasSpawn && IsInCountDown)
-        {
-            GUI.Label(new Rect(0, 0, 200, 40), "CountDown: " + (countDownTime - CountDownCounter));
-        }
-        if (wasSpawn && (Winner != PlayerRef.None))
-        {
-            GUI.Label(new Rect(0, 0, 200, 40), "The Winner is: " + Winner);
-        }
-    }
-
-    private IEnumerator StartCountDown()
-    {
-        IsInCountDown = true;
-        float countDownTimer = 2.0f;
-        CountDownCounter = 0;
-        while (IsInCountDown)
-        {
-            if (countDownTimer < 0.0f)
-            {
-                CountDownCounter++;
-                countDownTimer = 1.0f;
-            }
-            countDownTimer -= Time.deltaTime;
-            if (CountDownCounter == countDownTime)
-            {
-                IsInCountDown = false;
-                break;
-            }
-            yield return new WaitForEndOfFrame();
-        }
-        foreach (Player p in players)
-        {
-            p.CanMove = true;
-        }
-    }
-
-    public override void Spawned()
-    {
-        wasSpawn = true;
-    }
-
-    public void StartGame()
-    {
-        StartCoroutine(StartCountDown());
-    }
+    private bool isMachBegin = false;
 
     public void PlayerJoined(PlayerRef playerRef)
     {
@@ -80,11 +20,16 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
             return;
         }
         Vector3 spawnPosition = spawnPositions[players.Count].position;
-        spawnPosition.y = 1.0f;
+        spawnPosition.y += 1.0f;
         Player player = Runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, playerRef);
         Runner.SetPlayerObject(playerRef, player.Object);
         players.Add(player);
         Rpc_RaiseOnPlayerJoinEvent(playerRef, players.Count, spawnPositions.Length);
+        if (!isMachBegin && players.Count > 0 && players.Count == spawnPositions.Length)
+        {
+            StartCoroutine(PreMachCountDown());
+            isMachBegin = true;
+        }
     }
 
     public void PlayerLeft(PlayerRef playerRef)
@@ -101,9 +46,85 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
         }
     }
 
+    private IEnumerator PreMachCountDown()
+    {
+        float countDownTimer = 2.0f;
+        int countDownCounter = 0;
+        while (true)
+        {
+            if (countDownTimer < 0.0f)
+            {
+                countDownCounter++;
+                Rpc_RaiseOnCountDownChangeEvent(countDownTime - countDownCounter);
+                countDownTimer = 1.0f;
+            }
+            countDownTimer -= Time.deltaTime;
+            if (countDownCounter == countDownTime)
+            {
+                break;
+            }
+            yield return new WaitForEndOfFrame();
+        }
+        foreach (Player p in players)
+        {
+            p.CanMove = true;
+        }
+        Rpc_RaiseOnMachBegin();
+        StartCoroutine(DuringMatchTimer());
+    }
+
+    public IEnumerator DuringMatchTimer()
+    {
+        float countDownTimer = 2.0f;
+        int machDurection = (5 * 60);
+        int countDownCounter = 0;
+        Rpc_RaiseOnMachTimerChangeEvent(machDurection);
+        while (true)
+        {
+            if (countDownTimer < 0.0f)
+            {
+                countDownCounter++;
+                Rpc_RaiseOnMachTimerChangeEvent(machDurection - countDownCounter);
+                countDownTimer = 1.0f;
+            }
+            countDownTimer -= Time.deltaTime;
+            if (countDownCounter == machDurection)
+            {
+                break;
+            }
+            yield return new WaitForEndOfFrame();
+        }
+        Rpc_RaiseOnMachEnd();
+    }
+
+
     [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
     private void Rpc_RaiseOnPlayerJoinEvent(PlayerRef playerRef, int playerCount, int targetPlayerCount)
     {
         EventBus.Raise<OnPlayerJoinEvent>(playerRef, playerCount, targetPlayerCount);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
+    private void Rpc_RaiseOnCountDownChangeEvent(int countDown)
+    {
+        EventBus.Raise<OnCountDownChangeEvent>(countDown);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
+    private void Rpc_RaiseOnMachTimerChangeEvent(int seconds)
+    {
+        EventBus.Raise<OnMachTimerDownChangeEvent>(seconds);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
+    private void Rpc_RaiseOnMachBegin()
+    {
+        EventBus.Raise<OnMachBeginEvent>();
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
+    private void Rpc_RaiseOnMachEnd()
+    {
+        EventBus.Raise<OnMachEndEvent>();
     }
 }

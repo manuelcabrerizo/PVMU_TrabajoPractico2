@@ -1,4 +1,4 @@
-class WaitForPlayersState : FsmState<UIMenu>
+class WaitForPlayersState : FsmState<UIManager>
 {
     private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 

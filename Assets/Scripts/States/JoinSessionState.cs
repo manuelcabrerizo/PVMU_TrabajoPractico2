@@ -1,6 +1,6 @@
 using UnityEngine;
 
-class JoinSessionState : FsmState<UIMenu>
+class JoinSessionState : FsmState<UIManager>
 {
     private NetworkManager NetworkManager => ServiceProvider.Instance.GetService<NetworkManager>();
     private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
