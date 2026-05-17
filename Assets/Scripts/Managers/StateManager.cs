@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-public class UIManager : MonoBehaviour
+public class StateManager : MonoBehaviour
 {
     public GameObject SessionPrefab;
     public GameObject PlayerImage;
@@ -16,6 +16,7 @@ public class UIManager : MonoBehaviour
     public GameObject JoinSessionPanel;
     public GameObject WaitForPlayersPanel;
     public GameObject PlayingPanel;
+    public GameObject DeadPanel;
 
     // Main Menu buttons
     public Button MainMenuCreateButton;
@@ -36,53 +37,66 @@ public class UIManager : MonoBehaviour
     public TMP_Text PlayingCountDown;
     public Image PlayingLifebarImage;
     public TMP_Text PlayingMachTimer;
+    // Dead UI
+    public Button DeadRespawnButton;
+    public Button DeadBackButton;
 
     public UnityEvent OnGoToMainMenu;
     public UnityEvent OnGoToCreateSession;
     public UnityEvent OnGoToJoinSession;
     public UnityEvent OnGoToWaitForPlayers;
     public UnityEvent OnGoToPlaying;
+    public UnityEvent OnGoToDead;
 
-    private FsmStateMachine<UIManager> fsm = null;
-    private MainMenuState mainMenuState = null;
-    private CreateSessionState createSessionState = null;
-    private JoinSessionState joinSessionState = null;
-    private WaitForPlayersState waitPlayersState = null;
-    private PlayingState playingState = null;
+    public FsmState<StateManager> CurrentState => fsm.CurrentState;
+
+    private FsmStateMachine<StateManager> fsm = null;
+    public MainMenuState MainMenuState = null;
+    public CreateSessionState CreateSessionState = null;
+    public JoinSessionState JoinSessionState = null;
+    public WaitForPlayersState WaitPlayersState = null;
+    public PlayingState PlayingState = null;
+    public DeadState DeadState = null;
 
     private void Start()
     {
-        mainMenuState = new MainMenuState(this);
-        createSessionState = new CreateSessionState(this);
-        joinSessionState = new JoinSessionState(this);
-        waitPlayersState = new WaitForPlayersState(this);
-        playingState = new PlayingState(this);
+        MainMenuState = new MainMenuState(this);
+        CreateSessionState = new CreateSessionState(this);
+        JoinSessionState = new JoinSessionState(this);
+        WaitPlayersState = new WaitForPlayersState(this);
+        PlayingState = new PlayingState(this);
+        DeadState = new DeadState(this);
 
         MainMenuPanel.SetActive(false);
         CreateSessionPanel.SetActive(false);
         JoinSessionPanel.SetActive(false);
         WaitForPlayersPanel.SetActive(false);
-        fsm = new FsmStateMachine<UIManager>(
-            new FsmState<UIManager>[] { mainMenuState, createSessionState, joinSessionState, waitPlayersState, playingState },
-            new UnityEvent[] { OnGoToMainMenu, OnGoToCreateSession, OnGoToJoinSession, OnGoToWaitForPlayers, OnGoToPlaying },
-            mainMenuState);
-        fsm.ConfigureTransition(mainMenuState, createSessionState, OnGoToCreateSession);
-        fsm.ConfigureTransition(mainMenuState, joinSessionState, OnGoToJoinSession);
-        fsm.ConfigureTransition(createSessionState, mainMenuState, OnGoToMainMenu);
-        fsm.ConfigureTransition(createSessionState, waitPlayersState, OnGoToWaitForPlayers);
-        fsm.ConfigureTransition(joinSessionState, mainMenuState, OnGoToMainMenu);
-        fsm.ConfigureTransition(joinSessionState, waitPlayersState, OnGoToWaitForPlayers);
-        fsm.ConfigureTransition(waitPlayersState, mainMenuState, OnGoToMainMenu);
-        fsm.ConfigureTransition(waitPlayersState, playingState, OnGoToPlaying);
+
+        fsm = new FsmStateMachine<StateManager>(
+            new FsmState<StateManager>[] { MainMenuState, CreateSessionState, JoinSessionState, WaitPlayersState, PlayingState, DeadState },
+            new UnityEvent[] { OnGoToMainMenu, OnGoToCreateSession, OnGoToJoinSession, OnGoToWaitForPlayers, OnGoToPlaying, OnGoToDead },
+            MainMenuState);
+        
+        fsm.ConfigureTransition(MainMenuState, CreateSessionState, OnGoToCreateSession);
+        fsm.ConfigureTransition(MainMenuState, JoinSessionState, OnGoToJoinSession);
+        fsm.ConfigureTransition(CreateSessionState, MainMenuState, OnGoToMainMenu);
+        fsm.ConfigureTransition(CreateSessionState, WaitPlayersState, OnGoToWaitForPlayers);
+        fsm.ConfigureTransition(JoinSessionState, MainMenuState, OnGoToMainMenu);
+        fsm.ConfigureTransition(JoinSessionState, WaitPlayersState, OnGoToWaitForPlayers);
+        fsm.ConfigureTransition(WaitPlayersState, MainMenuState, OnGoToMainMenu);
+        fsm.ConfigureTransition(WaitPlayersState, PlayingState, OnGoToPlaying);
+        fsm.ConfigureTransition(PlayingState, DeadState, OnGoToDead);
+        fsm.ConfigureTransition(DeadState, PlayingState, OnGoToPlaying);
     }
 
     private void OnDestroy()
     {
-        mainMenuState.Dispose();
-        createSessionState.Dispose();
-        joinSessionState.Dispose();
-        waitPlayersState.Dispose();
-        playingState.Dispose();
+        MainMenuState.Dispose();
+        CreateSessionState.Dispose();
+        JoinSessionState.Dispose();
+        WaitPlayersState.Dispose();
+        PlayingState.Dispose();
+        DeadState.Dispose();
     }
 
     public void ClearSessionsButtons()

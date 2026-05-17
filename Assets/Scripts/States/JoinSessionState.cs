@@ -1,11 +1,11 @@
 using UnityEngine;
 
-class JoinSessionState : FsmState<UIManager>
+public class JoinSessionState : FsmState<StateManager>
 {
     private NetworkManager NetworkManager => ServiceProvider.Instance.GetService<NetworkManager>();
     private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 
-    public JoinSessionState(UIManager owner) : base(owner)
+    public JoinSessionState(StateManager owner) : base(owner)
     {
         EventBus.Subscribe<OnSessionListUpdatedEvent>(OnSessionListUpdated);
         owner.JoinSessionBackButton.onClick.AddListener(OnBackButtonClick);
@@ -37,6 +37,9 @@ class JoinSessionState : FsmState<UIManager>
 
     private void OnSessionListUpdated(in OnSessionListUpdatedEvent onSessionListUpdatedEvent)
     {
+        if (owner.CurrentState != owner.JoinSessionState)
+            return;
+
         owner.ClearSessionsButtons();
         owner.CreateSessionButtons(onSessionListUpdatedEvent.SessionInfoList, OnSessionButtonClick);
     }

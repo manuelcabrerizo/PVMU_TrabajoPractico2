@@ -1,9 +1,9 @@
-class WaitForPlayersState : FsmState<UIManager>
+public class WaitForPlayersState : FsmState<StateManager>
 {
     private GameManager GameManager => ServiceProvider.Instance.GetService<GameManager>();
     private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 
-    public WaitForPlayersState(UIManager owner) : base(owner)
+    public WaitForPlayersState(StateManager owner) : base(owner)
     {
         EventBus.Subscribe<OnPlayerJoinEvent>(OnPlayerJoin);
         owner.WaitForPlayersBackButton.onClick.AddListener(OnBackButtonClick);
@@ -30,6 +30,9 @@ class WaitForPlayersState : FsmState<UIManager>
 
     private void OnPlayerJoin(in OnPlayerJoinEvent onPlayerJoinEvent)
     {
+        if (owner.CurrentState != owner.WaitPlayersState)
+            return;
+
         owner.ClearPlayerImages();
         owner.CreatePlayerImages(onPlayerJoinEvent.PlayerCount);
         if (onPlayerJoinEvent.PlayerCount >= onPlayerJoinEvent.TargetPlayerCount)

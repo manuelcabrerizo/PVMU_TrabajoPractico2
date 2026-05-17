@@ -19,9 +19,23 @@ public class Health : NetworkBehaviour
         }
     }
     
-    public void TakeDamage(int damage)
+    public bool TakeDamage(int damage)
     {
         CurrentHealth = Math.Max(CurrentHealth - damage, 0);
+        if (HasStateAuthority)
+        {
+            Rpc_RaiseOnHealthChangeEvent();
+            if (!IsAlive)
+            {
+                Rpc_RaiseOnPlayerDieEvent();
+            }
+        }
+        return !IsAlive;
+    }
+
+    public void Cure()
+    {
+        CurrentHealth = MaxHealth;
         if (HasStateAuthority)
         {
             Rpc_RaiseOnHealthChangeEvent();
@@ -32,6 +46,12 @@ public class Health : NetworkBehaviour
     private void Rpc_RaiseOnHealthChangeEvent()
     {
         EventBus.Raise<OnHealthChangeEvent>(CurrentHealth, MaxHealth);
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.InputAuthority, HostMode = RpcHostMode.SourceIsServer)]
+    private void Rpc_RaiseOnPlayerDieEvent()
+    {
+        EventBus.Raise<OnPlayerDieEvent>();
     }
 }
 

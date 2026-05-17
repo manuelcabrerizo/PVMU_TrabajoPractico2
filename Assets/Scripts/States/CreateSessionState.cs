@@ -1,9 +1,9 @@
 using UnityEngine;
 
-class CreateSessionState : FsmState<UIManager>
+public class CreateSessionState : FsmState<StateManager>
 {
     private NetworkManager NetworkManager => ServiceProvider.Instance.GetService<NetworkManager>();
-    public CreateSessionState(UIManager owner) : base(owner)
+    public CreateSessionState(StateManager owner) : base(owner)
     {
         owner.CreateSessionCreateButton.onClick.AddListener(OnCreateButtonClick);
         owner.CreateSessionBackButton.onClick.AddListener(OnBackButtonClick);
@@ -16,6 +16,8 @@ class CreateSessionState : FsmState<UIManager>
 
     public override void OnEnter()
     {
+        owner.CreateSessionCreateButton.interactable = true;
+        owner.CreateSessionBackButton.interactable = true;
         owner.CreateSessionPanel.SetActive(true);
     }
 
@@ -28,6 +30,8 @@ class CreateSessionState : FsmState<UIManager>
     {
         if (owner.CreateSessionInputField.text.Length > 0)
         {
+            owner.CreateSessionCreateButton.interactable = false;
+            owner.CreateSessionBackButton.interactable = false;
             NetworkManager.StartHost(owner.CreateSessionInputField.text,
                 () => {
                     owner.OnGoToWaitForPlayers?.Invoke();

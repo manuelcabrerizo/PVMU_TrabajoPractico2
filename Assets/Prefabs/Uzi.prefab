@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 6057696713940325509}
-  - component: {fileID: 5090564740666058081}
+  - component: {fileID: 1339177551065769074}
   m_Layer: 0
   m_Name: Uzi
   m_TagString: Untagged
@@ -33,7 +33,7 @@ Transform:
   - {fileID: 7883723728290785107}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &5090564740666058081
+--- !u!114 &1339177551065769074
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -42,7 +42,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 8922803960007708426}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1e040429beeb95043b18c59803a69b45, type: 3}
+  m_Script: {fileID: 11500000, guid: f886eda2061fe7c49931c1db99d57032, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   rateOfFire: 0.1

@@ -7,16 +7,19 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
 {
     private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 
+    public bool IsPersistance => true;
+    public bool IsSpawned { get; private set; } = false;
     [Networked] public bool IsMatchBegin { get; private set; } = false;
     [Networked] public int CurrentPlayerCount { get; private set; } = 0;
-    public int TargetPlayerCount { get; private set; } = 2;
-    public bool IsPersistance => true;
-    public bool IsSpawned {get; private set; } = false;
-
+    [Networked] public bool IsInCountDown { get; private set; } = false;
+    public Player LocalPlayer { get; set; } = null;
 
     [SerializeField] private Player playerPrefab;
+
+    public int TargetPlayerCount = 2;
     [SerializeField] private Transform[] spawnPositions;
     [SerializeField] private int countDownTime = 3;
+    
     private List<Player> players = new List<Player>();
 
     private void Awake()
@@ -40,6 +43,7 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
         Player player = Runner.Spawn(playerPrefab, spawnPosition, Quaternion.identity, playerRef);
         Runner.SetPlayerObject(playerRef, player.Object);
         players.Add(player);
+
         CurrentPlayerCount++;
         Rpc_RaiseOnPlayerJoinEvent(playerRef, CurrentPlayerCount, TargetPlayerCount);
         if (!IsMatchBegin && CurrentPlayerCount == TargetPlayerCount)
@@ -50,7 +54,6 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
         else if (IsMatchBegin)
         {
             player.CanMove = true;
-            player.Rpc_RaiseOnMatchBegin();
         }
     }
 
@@ -69,8 +72,23 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
         }
     }
 
+    public void RevivePlayer(Player player)
+    {
+        if (player.Object.HasInputAuthority == false)
+        {
+            return;
+        }
+        player.Rpc_RevivePlayer();
+    }
+
+    public Vector3 GetRandomSpawnPosition()
+    {
+        return spawnPositions[Random.Range(0, spawnPositions.Length)].position;
+    }
+
     private IEnumerator PreMatchCountDown()
     {
+        IsInCountDown = true;
         float countDownTimer = 2.0f;
         int countDownCounter = 0;
         while (true)
@@ -92,6 +110,7 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
         {
             p.CanMove = true;
         }
+        IsInCountDown = false;
         Rpc_RaiseOnMatchBegin();
         StartCoroutine(DuringMatchTimer());
     }

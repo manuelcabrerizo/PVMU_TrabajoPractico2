@@ -2,6 +2,8 @@ using UnityEngine.Events;
 
 public class FsmStateMachine<T>
 {
+    public FsmState<T> CurrentState => currentState;
+
     private DobleEntryTable<FsmState<T>, UnityEvent, FsmState<T>> transitionsTable;
     private FsmState<T> currentState;
     public FsmStateMachine(FsmState<T>[] states, UnityEvent[] transitions, FsmState<T> startState)
@@ -14,7 +16,7 @@ public class FsmStateMachine<T>
     public void OnTriggerTransition(UnityEvent transition)
     {
         FsmState<T> targetState = transitionsTable[currentState, transition];
-        if (targetState == null)
+        if (targetState == null || targetState == currentState)
             return;
 
         currentState.OnExit();

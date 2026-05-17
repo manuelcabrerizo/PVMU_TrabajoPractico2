@@ -1,7 +1,7 @@
-class MainMenuState : FsmState<UIManager>
+public class MainMenuState : FsmState<StateManager>
 {
 
-    public MainMenuState(UIManager owner) : base(owner)
+    public MainMenuState(StateManager owner) : base(owner)
     {
         owner.MainMenuCreateButton.onClick.AddListener(OnCreateButtonClick);
         owner.MainMenuJoinButton.onClick.AddListener(OnJoinButtonClick);
