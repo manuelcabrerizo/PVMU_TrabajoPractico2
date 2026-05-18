@@ -15,18 +15,3 @@ public struct OnHealthChangeEvent : IEvent
         MaxHealth = 0;
     }
 }
-
-
-/*
-[Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority, HostMode = RpcHostMode.SourceIsHostPlayer)]
-private void Rpc_Jump()
-{
-    Rpc_RelayJump();
-}
-
-[Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
-private void Rpc_RelayJump()
-{
-    //IsJumping = true;
-}
-*/

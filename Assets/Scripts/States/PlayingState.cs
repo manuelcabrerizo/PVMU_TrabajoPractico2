@@ -14,10 +14,12 @@ public class PlayingState : FsmState<StateManager>
         EventBus.Subscribe<OnMatchTimerDownChangeEvent>(OnMatchTimerDownChange);
         EventBus.Subscribe<OnHealthChangeEvent>(OnHealthChange);
         EventBus.Subscribe<OnPlayerDieEvent>(OnPlayerDie);
+        EventBus.Subscribe<OnScoreChangeEvent>(OnScoreChange);
     }
 
     public override void Dispose()
     {
+        EventBus.Unsubscribe<OnScoreChangeEvent>(OnScoreChange);
         EventBus.Unsubscribe<OnPlayerDieEvent>(OnPlayerDie);
         EventBus.Unsubscribe<OnHealthChangeEvent>(OnHealthChange);
         EventBus.Unsubscribe<OnMatchTimerDownChangeEvent>(OnMatchTimerDownChange);
@@ -80,11 +82,18 @@ public class PlayingState : FsmState<StateManager>
         owner.PlayingMachTimer.text = string.Format("{0:00}:{1:00}", (int)time.TotalMinutes, time.Seconds);
     }
 
-    private void OnPlayerDie(in OnPlayerDieEvent callback)
+    private void OnPlayerDie(in OnPlayerDieEvent onPlayerDieEvent)
     {
         if (owner.CurrentState != owner.PlayingState)
             return;
         owner.OnGoToDead?.Invoke();
+    }
+
+    private void OnScoreChange(in OnScoreChangeEvent onScoreChangeEvent)
+    {
+        if (owner.CurrentState != owner.PlayingState)
+            return;
+        owner.PlayingScoreText.text = "Kills: " + onScoreChangeEvent.Score;
     }
 
     private void BeginMatch()

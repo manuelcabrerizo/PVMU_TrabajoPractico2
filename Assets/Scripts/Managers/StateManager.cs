@@ -37,6 +37,7 @@ public class StateManager : MonoBehaviour
     public TMP_Text PlayingCountDown;
     public Image PlayingLifebarImage;
     public TMP_Text PlayingMachTimer;
+    public TMP_Text PlayingScoreText;
     // Dead UI
     public Button DeadRespawnButton;
     public Button DeadBackButton;

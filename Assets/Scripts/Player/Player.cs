@@ -6,15 +6,17 @@ using UnityEngine;
 public class Player : NetworkBehaviour
 {
     private GameManager GameManager => ServiceProvider.Instance.GetService<GameManager>();
+    private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 
     [Networked] public bool CanMove { get; set; } = false;
-    [Networked] public bool IsReviving { get; set; } = false;
-    [Networked] public Vector3 SpawnPosition { get; set; } = Vector3.zero;
+    [Networked] public int Score { get; set; } = 0;
+
+    [Networked] private bool isReviving { get; set; } = false;
+    [Networked] private bool isDying { get; set; } = false;
+    [Networked] private Vector3 spawnPosition { get; set; } = Vector3.zero;
     [Networked] private TickTimer shootTimer { get; set; }
 
-    [SerializeField] private GameObject visual = null;
     [SerializeField] private Transform weaponTransform = null;
-    // TODO: Make this a scriptable object? pickables?
     [SerializeField] private Uzi weapon = null;
     [SerializeField] private float jumpForce = 8.0f;
 
@@ -34,10 +36,16 @@ public class Player : NetworkBehaviour
 
     public override void FixedUpdateNetwork() 
     {
-        if (IsReviving)
+        if (isReviving)
         {
-            KCC.SetPosition(SpawnPosition);
-            IsReviving = false;
+            KCC.SetPosition(spawnPosition);
+            isReviving = false;
+        }
+
+        if (isDying)
+        {
+            KCC.SetPosition(new Vector3(0.0f, -200.0f, 0.0f));
+            isDying = false;
         }
 
         if (!CanMove || !health.IsAlive)
@@ -45,6 +53,7 @@ public class Player : NetworkBehaviour
             KCC.Move(Vector3.zero, 0.0f);
             return;
         }
+
         if (GetInput(out NetworkInputData data))
         {
             Vector2 lookRotation = data.GetLookRotation();
@@ -115,41 +124,31 @@ public class Player : NetworkBehaviour
             {
                 if (hits[i].Hitbox.Root.Object == Object) continue;
                 Health health = hits[i].Hitbox.gameObject.GetComponentInParent<Health>();
-                if (health.TakeDamage(5))
+                if (health.IsAlive && health.TakeDamage(5))
                 {
-                    Rpc_KillPlayer(health.GetComponent<Player>());
+                    health.GetComponent<Player>().isDying = true;
+                    Score++;
+                    if (HasStateAuthority)
+                    {
+                        Rpc_RaiseOnScoreChangeEvent(Score);
+                    }
                 }
                 break;
             }
         }
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
-    private void Rpc_KillPlayer(Player player)
-    {
-        player.GetComponent<HitboxRoot>().HitboxRootActive = false;
-        player.GetComponentInChildren<Hitbox>().HitboxActive = false;
-        player.visual.GetComponent<Collider>().enabled = false;
-        player.visual.SetActive(false);
-        player.weaponTransform.gameObject.SetActive(false);
-    }
-
     [Rpc(RpcSources.InputAuthority, RpcTargets.StateAuthority, HostMode = RpcHostMode.SourceIsHostPlayer)]
     public void Rpc_RevivePlayer()
     {
-        SpawnPosition = GameManager.GetRandomSpawnPosition();
+        spawnPosition = GameManager.GetRandomSpawnPosition();
         health.Cure();
-        IsReviving = true;
-        Rpc_RelayRevivePlayer();
+        isReviving = true;
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
-    public void Rpc_RelayRevivePlayer()
+    [Rpc(RpcSources.StateAuthority, RpcTargets.InputAuthority, HostMode = RpcHostMode.SourceIsServer)]
+    public void Rpc_RaiseOnScoreChangeEvent(int score)
     {
-        GetComponent<HitboxRoot>().HitboxRootActive = true;
-        GetComponentInChildren<Hitbox>().HitboxActive = true;
-        weaponTransform.gameObject.SetActive(true);
-        visual.GetComponent<Collider>().enabled = true;
-        visual.SetActive(true);
+        EventBus.Raise<OnScoreChangeEvent>(score);
     }
 }
