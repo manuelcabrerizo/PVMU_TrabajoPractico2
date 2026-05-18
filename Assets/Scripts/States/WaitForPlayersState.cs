@@ -1,5 +1,6 @@
 public class WaitForPlayersState : FsmState<StateManager>
 {
+    private NetworkManager NetworkManager => ServiceProvider.Instance.GetService<NetworkManager>();
     private GameManager GameManager => ServiceProvider.Instance.GetService<GameManager>();
     private EventBus EventBus => ServiceProvider.Instance.GetService<EventBus>();
 
@@ -25,6 +26,7 @@ public class WaitForPlayersState : FsmState<StateManager>
 
     public override void OnExit()
     {
+        owner.ClearPlayerImages();
         owner.WaitForPlayersPanel.SetActive(false);
     }
 
@@ -43,7 +45,7 @@ public class WaitForPlayersState : FsmState<StateManager>
 
     private void OnBackButtonClick()
     {
-        // TODO: Disconect
+        NetworkManager.Disconect();
         owner.OnGoToMainMenu?.Invoke();
     }
 }

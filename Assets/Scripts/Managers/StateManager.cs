@@ -148,7 +148,7 @@ public class StateManager : MonoBehaviour
     {
         for (int i = 0; i < count; i++)
         { 
-            GameObject go = Instantiate(PlayerImage, WaitForPlayerContent);
+            Instantiate(PlayerImage, WaitForPlayerContent);
         }
     }
 

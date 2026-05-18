@@ -19,6 +19,7 @@ public class JoinSessionState : FsmState<StateManager>
     public override void OnEnter()
     {
         owner.JoinSessionPanel.SetActive(true);
+        owner.JoinSessionBackButton.interactable = false;
         NetworkManager.JoinLobby(
             () =>
             {
@@ -32,6 +33,7 @@ public class JoinSessionState : FsmState<StateManager>
 
     public override void OnExit()
     {
+        owner.ClearSessionsButtons();
         owner.JoinSessionPanel.SetActive(false);
     }
 
@@ -42,6 +44,7 @@ public class JoinSessionState : FsmState<StateManager>
 
         owner.ClearSessionsButtons();
         owner.CreateSessionButtons(onSessionListUpdatedEvent.SessionInfoList, OnSessionButtonClick);
+        owner.JoinSessionBackButton.interactable = true;
     }
 
     private void OnSessionButtonClick(string session)
@@ -59,7 +62,7 @@ public class JoinSessionState : FsmState<StateManager>
 
     private void OnBackButtonClick()
     {
-        // TODO: Leave the lobby
+        NetworkManager.Disconect();
         owner.OnGoToMainMenu?.Invoke();
     }
 }

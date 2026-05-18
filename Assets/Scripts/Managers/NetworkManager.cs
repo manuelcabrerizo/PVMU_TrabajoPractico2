@@ -12,18 +12,20 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks, IService
 
     private NetworkRunner networkRunner = null;
     private NetworkInputData networkInputData;
+    private bool isInLobby = false;
 
     private void Awake()
     {
         ServiceProvider.Instance.AddService<NetworkManager>(this);
         ServiceProvider.Instance.AddService<EventBus>(new EventBus());
         networkInputData = new NetworkInputData(Vector2.zero, (char)0);
+        gameObject.AddComponent<HitboxManager>();
     }
 
     public async void JoinLobby(Action onSuccess, Action<StartGameResult> onFailure)
     {
+        isInLobby = true;
         networkRunner = gameObject.AddComponent<NetworkRunner>();
-        gameObject.AddComponent<HitboxManager>();
         networkRunner.ProvideInput = true;
         var result = await networkRunner.JoinSessionLobby(SessionLobby.Custom, "TrabajoPractico2");
         if (result.Ok)
@@ -37,9 +39,9 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks, IService
     }
 
     public async void StartHost(string session, Action onSuccess, Action<StartGameResult> onFailure)
-    { 
+    {
+        isInLobby = false;
         networkRunner = gameObject.AddComponent<NetworkRunner>();
-        gameObject.AddComponent<HitboxManager>();
         networkRunner.ProvideInput = true;
         SceneRef scene = SceneRef.FromIndex(SceneManager.GetActiveScene().buildIndex);
         NetworkSceneInfo sceneInfo = new NetworkSceneInfo();
@@ -68,6 +70,7 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks, IService
 
     public async void StartClient(string session, Action onSuccess, Action<StartGameResult> onFailure)
     {
+        isInLobby = false;
         var result = await networkRunner.StartGame(new StartGameArgs()
         {
             GameMode = GameMode.Client,
@@ -82,6 +85,18 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks, IService
         {
             onFailure?.Invoke(result);
         }
+    }
+
+    public async void Disconect()
+    {
+        await networkRunner.Shutdown(false);
+        Destroy(networkRunner);
+        networkRunner = null;
+        if (!isInLobby)
+        {
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
+        isInLobby = false;
     }
 
     void INetworkRunnerCallbacks.OnSessionListUpdated(NetworkRunner runner, List<SessionInfo> sessionList)

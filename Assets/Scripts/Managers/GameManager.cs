@@ -28,12 +28,22 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
 
     private void Awake()
     {
+        if (ServiceProvider.Instance.ContainsService<GameManager>())
+        {
+            ServiceProvider.Instance.RemoveService<GameManager>();
+        }
         ServiceProvider.Instance.AddService<GameManager>(this);
     }
 
     public override void Spawned()
     {
         IsSpawned = true;
+    }
+
+    public override void Despawned(NetworkRunner runner, bool hasState)
+    {
+        LocalPlayer = null;
+        IsSpawned = false;
     }
 
     public void PlayerJoined(PlayerRef playerRef)
@@ -73,6 +83,7 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
             Runner.Despawn(players[index].Object);
             players.RemoveAt(index);
             CurrentPlayerCount--;
+            Rpc_RaiseOnPlayerJoinEvent(playerRef, CurrentPlayerCount, TargetPlayerCount);
         }
     }
 
