@@ -42,7 +42,6 @@ public class StateManager : MonoBehaviour
     public TMP_Text PlayingScoreText;
     // Dead UI
     public Button DeadRespawnButton;
-    public Button DeadBackButton;
     // Match End UI
     public Button MatchEndBackButton;
     public Transform MatchEndContent;
@@ -99,9 +98,10 @@ public class StateManager : MonoBehaviour
         fsm.ConfigureTransition(WaitPlayersState, MainMenuState, OnGoToMainMenu);
         fsm.ConfigureTransition(WaitPlayersState, PlayingState, OnGoToPlaying);
         fsm.ConfigureTransition(PlayingState, DeadState, OnGoToDead);
-        fsm.ConfigureTransition(DeadState, PlayingState, OnGoToPlaying);
         fsm.ConfigureTransition(PlayingState, MatchEndState, OnGoToMatchEnd);
+        fsm.ConfigureTransition(DeadState, PlayingState, OnGoToPlaying);
         fsm.ConfigureTransition(DeadState, MatchEndState, OnGoToMatchEnd);
+        fsm.ConfigureTransition(MatchEndState, MainMenuState, OnGoToMainMenu);
     }
 
     private void OnDestroy()

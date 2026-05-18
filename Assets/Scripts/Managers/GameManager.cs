@@ -198,4 +198,10 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
     {
         EventBus.Raise<OnMatchEndEvent>();
     }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]
+    public void Rpc_RaiseOnHostDisconect()
+    {
+        EventBus.Raise<OnHostDisconectEvent>();
+    }
 }

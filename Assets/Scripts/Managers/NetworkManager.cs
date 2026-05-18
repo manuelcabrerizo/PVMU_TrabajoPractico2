@@ -16,7 +16,12 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks, IService
 
     private void Awake()
     {
+        if (ServiceProvider.Instance.ContainsService<NetworkManager>())
+        {
+            ServiceProvider.Instance.RemoveService<NetworkManager>();
+        }
         ServiceProvider.Instance.AddService<NetworkManager>(this);
+
         ServiceProvider.Instance.AddService<EventBus>(new EventBus());
         networkInputData = new NetworkInputData(Vector2.zero, (char)0);
         gameObject.AddComponent<HitboxManager>();
@@ -149,12 +154,16 @@ public class NetworkManager : MonoBehaviour, INetworkRunnerCallbacks, IService
         input.Set(networkInputData);
     }
 
+    void INetworkRunnerCallbacks.OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason)
+    {
+        Disconect();
+    }
+
+    void INetworkRunnerCallbacks.OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
     void INetworkRunnerCallbacks.OnPlayerJoined(NetworkRunner runner, PlayerRef player) { }
     void INetworkRunnerCallbacks.OnPlayerLeft(NetworkRunner runner, PlayerRef player) { }
     void INetworkRunnerCallbacks.OnInputMissing(NetworkRunner runner, PlayerRef player, NetworkInput input) { }
-    void INetworkRunnerCallbacks.OnShutdown(NetworkRunner runner, ShutdownReason shutdownReason) { }
     void INetworkRunnerCallbacks.OnConnectedToServer(NetworkRunner runner) { }
-    void INetworkRunnerCallbacks.OnDisconnectedFromServer(NetworkRunner runner, NetDisconnectReason reason) { }
     void INetworkRunnerCallbacks.OnConnectRequest(NetworkRunner runner, NetworkRunnerCallbackArgs.ConnectRequest request, byte[] token) { }
     void INetworkRunnerCallbacks.OnConnectFailed(NetworkRunner runner, NetAddress remoteAddress, NetConnectFailedReason reason) { }
     void INetworkRunnerCallbacks.OnUserSimulationMessage(NetworkRunner runner, SimulationMessagePtr message) { }

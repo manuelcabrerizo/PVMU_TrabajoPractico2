@@ -6,14 +6,12 @@ public class DeadState : FsmState<StateManager>
     public DeadState(StateManager owner) : base(owner)
     {
         owner.DeadRespawnButton.onClick.AddListener(OnRespawnButtonClick);
-        owner.DeadBackButton.onClick.AddListener(OnBackButtonClick);
         EventBus.Subscribe<OnMatchEndEvent>(OnMatchEnd);
     }
 
     public override void Dispose()
     {
         EventBus.Subscribe<OnMatchEndEvent>(OnMatchEnd);
-        owner.DeadBackButton.onClick.RemoveListener(OnBackButtonClick);
         owner.DeadRespawnButton.onClick.RemoveListener(OnRespawnButtonClick);
     }
 
@@ -31,11 +29,6 @@ public class DeadState : FsmState<StateManager>
     {
         owner.OnGoToPlaying?.Invoke();
         GameManager.RevivePlayer(GameManager.LocalPlayer);
-    }
-
-    private void OnBackButtonClick()
-    {
-        owner.OnGoToMainMenu?.Invoke();
     }
 
     private void OnMatchEnd(in OnMatchEndEvent callback)
