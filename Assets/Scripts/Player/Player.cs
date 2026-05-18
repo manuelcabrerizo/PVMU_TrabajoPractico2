@@ -16,21 +16,36 @@ public class Player : NetworkBehaviour
     [Networked] private Vector3 spawnPosition { get; set; } = Vector3.zero;
     [Networked] private TickTimer shootTimer { get; set; }
 
+
+    [SerializeField] private GameObject visualBody = null;
+    [SerializeField] private GameObject visualWeapon = null;
     [SerializeField] private Transform weaponTransform = null;
     [SerializeField] private Uzi weapon = null;
     [SerializeField] private float jumpForce = 8.0f;
 
     private SimpleKCC KCC;
     private Health health;
+    private NetworkMecanimAnimator mecanimAnimator;
+    private float smoothXInput = 0.0f;
+    private float smoothZInput = 0.0f;
 
     public override void Spawned()
     {
+        mecanimAnimator = GetComponent<NetworkMecanimAnimator>();
         health = GetComponent<Health>();
         KCC = GetComponent<SimpleKCC>();
         KCC.SetGravity(Physics.gravity.y * 2.0f);
         if (HasInputAuthority)
         {
             GameManager.LocalPlayer = this;
+
+            SkinnedMeshRenderer meshRenderer = visualBody.GetComponent<SkinnedMeshRenderer>();
+            meshRenderer.enabled = false;
+            visualWeapon.gameObject.SetActive(false);
+        }
+        else 
+        {
+            weaponTransform.gameObject.SetActive(false);
         }
     }
 
@@ -101,8 +116,14 @@ public class Player : NetworkBehaviour
         {
             KCC.Move(Vector3.zero, 0.0f);
         }
-        //float velocity = characterController.Velocity.magnitude / characterController.maxSpeed;
-        //mecanimAnimator.Animator.SetFloat("Velocity", velocity);
+
+        Vector3 worldVelocity = KCC.RealVelocity;
+        Vector3 localVelocity = KCC.transform.InverseTransformDirection(worldVelocity);
+
+        smoothXInput += ((localVelocity.x - smoothXInput) * 6) * Runner.DeltaTime;
+        smoothZInput += ((localVelocity.z - smoothZInput) * 6) * Runner.DeltaTime;
+        mecanimAnimator.Animator.SetFloat("VelocityX", Mathf.Clamp(smoothXInput, -1.5f, 1.5f));
+        mecanimAnimator.Animator.SetFloat("VelocityZ", Mathf.Clamp(smoothZInput, -1.5f, 1.5f));
     }
 
     private void LateUpdate()

@@ -148,7 +148,7 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
     public IEnumerator DuringMatchTimer()
     {
         float countDownTimer = 2.0f;
-        int matchDurection = 20;// (5 * 60);
+        int matchDurection = (5 * 60);
         int countDownCounter = 0;
         Rpc_RaiseOnMatchTimerChangeEvent(matchDurection);
         while (true)

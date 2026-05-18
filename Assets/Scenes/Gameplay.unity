@@ -5101,7 +5101,7 @@ MonoBehaviour:
   _IsInCountDown: 0
   _ScoreBoard: []
   playerPrefab: {fileID: 882261990350464573, guid: 645c974d70d9b7c428187e0ed49caa86, type: 3}
-  TargetPlayerCount: 3
+  TargetPlayerCount: 1
   spawnPositions:
   - {fileID: 1226518265}
   - {fileID: 2054407523}
