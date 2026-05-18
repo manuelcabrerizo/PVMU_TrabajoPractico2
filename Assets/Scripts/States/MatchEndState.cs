@@ -8,12 +8,10 @@ public class MatchEndState : FsmState<StateManager>
     public MatchEndState(StateManager owner) : base(owner)
     {
         owner.MatchEndBackButton.onClick.AddListener(OnBackButtonClick);
-        EventBus.Subscribe<OnHostDisconectEvent>(OnHostDisconect);
     }
 
     public override void Dispose()
     {
-        EventBus.Unsubscribe<OnHostDisconectEvent>(OnHostDisconect);
         owner.MatchEndBackButton.onClick.RemoveListener(OnBackButtonClick);
     }
 
@@ -33,21 +31,6 @@ public class MatchEndState : FsmState<StateManager>
 
     private void OnBackButtonClick()
     {
-        if (GameManager.LocalPlayer.Object.HasStateAuthority)
-        {
-            GameManager.Rpc_RaiseOnHostDisconect();
-        }
-        else
-        {
-            NetworkManager.Disconect();
-            owner.OnGoToMainMenu?.Invoke();
-        }
-    }
-
-    private void OnHostDisconect(in OnHostDisconectEvent callback)
-    {
-        if (owner.CurrentState != owner.MatchEndState)
-            return;
         NetworkManager.Disconect();
         owner.OnGoToMainMenu?.Invoke();
     }
