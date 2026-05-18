@@ -1,6 +1,7 @@
 ﻿using Fusion;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IService
@@ -12,6 +13,9 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
     [Networked] public bool IsMatchBegin { get; private set; } = false;
     [Networked] public int CurrentPlayerCount { get; private set; } = 0;
     [Networked] public bool IsInCountDown { get; private set; } = false;
+    [Networked, Capacity(10)]
+    public NetworkLinkedList<Player> ScoreBoard => default;
+
     public Player LocalPlayer { get; set; } = null;
 
     [SerializeField] private Player playerPrefab;
@@ -72,6 +76,21 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
         }
     }
 
+    private void OnMatchEnd()
+    {
+        if (HasStateAuthority == false)
+        {
+            return;
+        }
+        List<Player> sortedPlayers = players.OrderByDescending((p) => p.Score).ToList();
+        ScoreBoard.Clear();
+        foreach (Player player in sortedPlayers)
+        {
+            ScoreBoard.Add(player);
+        }
+        Rpc_RaiseOnMatchEnd();
+    }
+
     public void RevivePlayer(Player player)
     {
         if (player.Object.HasInputAuthority == false)
@@ -118,7 +137,7 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
     public IEnumerator DuringMatchTimer()
     {
         float countDownTimer = 2.0f;
-        int matchDurection = (5 * 60);
+        int matchDurection = 20;// (5 * 60);
         int countDownCounter = 0;
         Rpc_RaiseOnMatchTimerChangeEvent(matchDurection);
         while (true)
@@ -136,7 +155,7 @@ public class GameManager : NetworkBehaviour, IPlayerJoined, IPlayerLeft, IServic
             }
             yield return new WaitForEndOfFrame();
         }
-        Rpc_RaiseOnMatchEnd();
+        OnMatchEnd();
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All, HostMode = RpcHostMode.SourceIsServer)]

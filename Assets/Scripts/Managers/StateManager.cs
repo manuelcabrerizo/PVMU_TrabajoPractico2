@@ -9,6 +9,7 @@ using UnityEngine.UI;
 public class StateManager : MonoBehaviour
 {
     public GameObject SessionPrefab;
+    public GameObject PlayerScorePrefab;
     public GameObject PlayerImage;
 
     public GameObject MainMenuPanel;
@@ -17,6 +18,7 @@ public class StateManager : MonoBehaviour
     public GameObject WaitForPlayersPanel;
     public GameObject PlayingPanel;
     public GameObject DeadPanel;
+    public GameObject MatchEndPanel;
 
     // Main Menu buttons
     public Button MainMenuCreateButton;
@@ -41,6 +43,10 @@ public class StateManager : MonoBehaviour
     // Dead UI
     public Button DeadRespawnButton;
     public Button DeadBackButton;
+    // Match End UI
+    public Button MatchEndBackButton;
+    public Transform MatchEndContent;
+    public TMP_Text MatchEndTitleText;
 
     public UnityEvent OnGoToMainMenu;
     public UnityEvent OnGoToCreateSession;
@@ -48,6 +54,7 @@ public class StateManager : MonoBehaviour
     public UnityEvent OnGoToWaitForPlayers;
     public UnityEvent OnGoToPlaying;
     public UnityEvent OnGoToDead;
+    public UnityEvent OnGoToMatchEnd;
 
     public FsmState<StateManager> CurrentState => fsm.CurrentState;
 
@@ -58,6 +65,7 @@ public class StateManager : MonoBehaviour
     public WaitForPlayersState WaitPlayersState = null;
     public PlayingState PlayingState = null;
     public DeadState DeadState = null;
+    public MatchEndState MatchEndState = null;
 
     private void Start()
     {
@@ -67,15 +75,19 @@ public class StateManager : MonoBehaviour
         WaitPlayersState = new WaitForPlayersState(this);
         PlayingState = new PlayingState(this);
         DeadState = new DeadState(this);
+        MatchEndState = new MatchEndState(this);
 
         MainMenuPanel.SetActive(false);
         CreateSessionPanel.SetActive(false);
         JoinSessionPanel.SetActive(false);
         WaitForPlayersPanel.SetActive(false);
+        PlayingPanel.SetActive(false);
+        DeadPanel.SetActive(false);
+        MatchEndPanel.SetActive(false);
 
         fsm = new FsmStateMachine<StateManager>(
-            new FsmState<StateManager>[] { MainMenuState, CreateSessionState, JoinSessionState, WaitPlayersState, PlayingState, DeadState },
-            new UnityEvent[] { OnGoToMainMenu, OnGoToCreateSession, OnGoToJoinSession, OnGoToWaitForPlayers, OnGoToPlaying, OnGoToDead },
+            new FsmState<StateManager>[] { MainMenuState, CreateSessionState, JoinSessionState, WaitPlayersState, PlayingState, DeadState, MatchEndState },
+            new UnityEvent[] { OnGoToMainMenu, OnGoToCreateSession, OnGoToJoinSession, OnGoToWaitForPlayers, OnGoToPlaying, OnGoToDead, OnGoToMatchEnd },
             MainMenuState);
         
         fsm.ConfigureTransition(MainMenuState, CreateSessionState, OnGoToCreateSession);
@@ -88,6 +100,8 @@ public class StateManager : MonoBehaviour
         fsm.ConfigureTransition(WaitPlayersState, PlayingState, OnGoToPlaying);
         fsm.ConfigureTransition(PlayingState, DeadState, OnGoToDead);
         fsm.ConfigureTransition(DeadState, PlayingState, OnGoToPlaying);
+        fsm.ConfigureTransition(PlayingState, MatchEndState, OnGoToMatchEnd);
+        fsm.ConfigureTransition(DeadState, MatchEndState, OnGoToMatchEnd);
     }
 
     private void OnDestroy()
@@ -98,6 +112,7 @@ public class StateManager : MonoBehaviour
         WaitPlayersState.Dispose();
         PlayingState.Dispose();
         DeadState.Dispose();
+        MatchEndState.Dispose();
     }
 
     public void ClearSessionsButtons()
@@ -134,6 +149,20 @@ public class StateManager : MonoBehaviour
         for (int i = 0; i < count; i++)
         { 
             GameObject go = Instantiate(PlayerImage, WaitForPlayerContent);
+        }
+    }
+
+    public void ShowPlayerScoreTexts(NetworkLinkedList<Player> scoreBoard)
+    {
+        for (int i = MatchEndContent.childCount - 1; i >= 0; i--)
+        {
+            Destroy(MatchEndContent.GetChild(i).gameObject);
+        }
+        foreach (Player player in scoreBoard)
+        {
+            GameObject go = Instantiate(PlayerScorePrefab, MatchEndContent);
+            TMP_Text text = go.GetComponentInChildren<TMP_Text>();
+            text.text = player.Object.InputAuthority.ToString() + ": " + player.Score;
         }
     }
 }

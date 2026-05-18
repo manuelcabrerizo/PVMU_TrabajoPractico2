@@ -65,6 +65,7 @@ public class PlayingState : FsmState<StateManager>
             return;
         owner.PlayingGamplayUI.SetActive(false);
         owner.PlayingCountDown.gameObject.SetActive(true);
+        owner.OnGoToMatchEnd?.Invoke();
     }
 
     private void OnHealthChange(in OnHealthChangeEvent onHealthChangeEvent)
